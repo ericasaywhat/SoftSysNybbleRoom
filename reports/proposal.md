@@ -4,7 +4,7 @@
 
 #### Spring 2018
 
-## Description
+## Goals
 
 Our primary goal for this project is to learn how to use C in the context of network programming, clients, and servers. We will figure out what web applications with multiple concurrent users need, such as multiple threads.
 
