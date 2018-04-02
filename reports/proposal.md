@@ -1,4 +1,4 @@
-# NybbleRoom SoftSys Project 2: Proposal
+# NybbleRoom Project Proposal: Online Chat Room
 
 #### Leon Lam, Erica Lee, and Emily Yeh
 
