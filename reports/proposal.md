@@ -1,12 +1,16 @@
-# NybbleRoom SoftSys Project 2: Proposal
+# NybbleRoom Project Proposal: Online Chat Room
 
 #### Leon Lam, Erica Lee, and Emily Yeh
 
 #### Spring 2018
 
-## Description
+## Goals
 
-Our primary goal for this project is to learn how to use C in the context of network programming, clients, and servers. We will figure out what web applications with multiple concurrent users need, such as multiple threads. In order to achieve these learning goals, we will create a chat room with an interface where users can play multiplayer games with each other online. Our minimum viable product is a chat room that allows multiple users to talk with each other, as well as play a simple multiplayer game by sending commands to the server. A stretch goal that we might work towards is allowing players to play more complex games, like Hunt the Wumpus or Battleship.
+Our primary goal for this project is to learn how to use C in the context of network programming, clients, and servers. We will figure out what web applications with multiple concurrent users need, such as multiple threads.
+
+In order to achieve these learning goals, we will create a chat room with an interface where users can play multiplayer games with each other online. Our minimum viable product is a chat room that allows multiple users to talk with each other, as well as play a simple multiplayer game by sending commands to the server.
+
+A stretch goal that we might work towards is allowing players to play more complex games, like Hunt the Wumpus or Battleship.
 
 ## Next Steps
 
