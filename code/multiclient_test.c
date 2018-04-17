@@ -13,7 +13,7 @@
 
 #define TRUE   1
 #define FALSE  0
-#define PORT 8888
+#define PORT   3000
 
 int main(int argc , char *argv[])
 {
@@ -173,7 +173,15 @@ int main(int argc , char *argv[])
                     //set the string terminating NULL byte on the end
                     //of the data read
                     buffer[valread] = '\0';
-                    send(sd , buffer , strlen(buffer) , 0 );
+                    int j;
+                    printf("%s", buffer);
+
+                    for (j = 0; j < max_clients; j++) {
+                        if (client_socket[j] != 0 && j != i) {
+                            send(client_socket[j] , buffer , strlen(buffer) , 0 );
+                        }
+
+                    }
                 }
             }
         }
