@@ -28,7 +28,7 @@ telnet [INSERT SERVER IP ADDRESS HERE] 3000
 
 and the new clients are able to talk to type and talk to each other via their terminals. Clients are also able to enter commands using `!` to specify commands, and the server may enter the `!wumpus` command to play the Wumpus game.
 
-Other features we have implemented include allowing each user to specify the name they would like to use when they are in the chat room and keeping track of the current clients using a hashmap.
+Other features we have implemented include allowing each user to specify the name they would like to use when they are in the chat room and keeping track of the current clients using a hashmap. This hashmap keeps track of each client's IP address, their hash key, and their chat room username, which they can specify when they first enter the chat room server.
 
 ## Next Steps
 
