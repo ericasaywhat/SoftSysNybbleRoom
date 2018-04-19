@@ -10,11 +10,62 @@
 #include <sys/socket.h> 
 #include <netinet/in.h> 
 #include <sys/time.h> //FD_SET, FD_ISSET, FD_ZERO macros 
-    
+#include <assert.h>
+
+#include "hashmap.h"
+
 #define TRUE   1 
 #define FALSE  0 
 #define PORT   3000
+
+#define KEY_MAX_LENGTH (256)
+#define KEY_PREFIX ("nybbles_")
+#define KEY_COUNT (1024*1024)
     
+typedef struct data_struct_s
+{
+    char ip[KEY_MAX_LENGTH];
+    char key_string[KEY_MAX_LENGTH];
+    char *name;
+} data_struct_t;
+
+void copy_over_ip(data_struct_t *value, char* ip) {
+    for (int i = 0; i < strlen(ip); i++) {
+        value->ip[i] = ip[i];
+    }
+}
+
+char *trim (char *s) {
+  int i = strlen(s)-1;
+  if ((i > 0) && (s[i] == '\n'))
+    s[i] = '\0';
+  return s;
+}
+
+void free_everything(map_t *map, char *ip, data_struct_t *value) {
+    int error; 
+
+    /* Free all of the values we allocated and remove them from the map */
+    for (int index=0; index<KEY_COUNT; index+=1)
+    {
+        snprintf(ip, KEY_MAX_LENGTH, "%s%d", KEY_PREFIX, index);
+
+        error = hashmap_get(map, ip, (void**)(&value));
+        assert(error==MAP_OK);
+
+        error = hashmap_remove(map, ip);
+        assert(error==MAP_OK);
+
+        free(value);        
+    }
+
+    hashmap_free(map);
+}
+
+void store_user_in_map(map_t *map, data_struct_t *value) {
+    hashmap_put(map, value->key_string, value);
+}
+
 int main(int argc , char *argv[])  
 {  
     int opt = TRUE;  
@@ -22,11 +73,16 @@ int main(int argc , char *argv[])
           max_clients = 30 , activity, i , valread , sd;  
     int max_sd;  
     struct sockaddr_in address;  
+    map_t *map;
+    data_struct_t *value;
         
     char buffer[1025];  //data buffer of 1K 
         
     //set of socket descriptors 
     fd_set readfds;  
+
+    //make the map
+    map = hashmap_new();
         
     //a message 
     char *message = "ECHO Daemon v1.0 \r\n";  
@@ -79,6 +135,7 @@ int main(int argc , char *argv[])
         
     while(TRUE)  
     {  
+        puts("once upon a time");
         //clear the socket set 
         FD_ZERO(&readfds);  
     
@@ -104,6 +161,7 @@ int main(int argc , char *argv[])
         //wait for an activity on one of the sockets , timeout is NULL , 
         //so wait indefinitely 
         activity = select( max_sd + 1 , &readfds , NULL , NULL , NULL);  
+        puts("there was a naughty bug");
       
         if ((activity < 0) && (errno!=EINTR))  
         {  
@@ -111,7 +169,7 @@ int main(int argc , char *argv[])
         }  
             
         //If something happened on the master socket , 
-        //then its an incoming connection 
+        //then it's an incoming connection 
         if (FD_ISSET(master_socket, &readfds))  
         {  
             if ((new_socket = accept(master_socket, 
@@ -120,10 +178,30 @@ int main(int argc , char *argv[])
                 perror("accept");  
                 exit(EXIT_FAILURE);  
             }  
+
+            char* new_name;
             
             //inform user of socket number - used in send and receive commands 
             printf("New connection , socket fd is %d , ip is : %s , port : %d \n" , new_socket , inet_ntoa(address.sin_addr) , ntohs(address.sin_port));  
-          
+            value = malloc(sizeof(data_struct_t));
+            copy_over_ip(value, inet_ntoa(address.sin_addr)); // store IP address
+            snprintf(value->key_string, KEY_MAX_LENGTH, "%s%d", KEY_PREFIX, value->name); // store key
+
+            char* query = "What do you want to be called? : ";
+            send(new_socket , query , strlen(query) , 0 );
+
+            read( new_socket , new_name, 1024); // get name value
+
+            new_name = trim(new_name);
+
+            printf("nnew socket's name : %s \n", new_name);
+
+            value->name = new_name;
+            send(new_socket , new_name , 50 , 0 );  
+            store_user_in_map(map, value);
+
+            printf("User hashed successfully. Length of map : %i\n", hashmap_length(map));
+
             //send new connection greeting message 
             if( send(new_socket, message, strlen(message), 0) != strlen(message) )  
             {  
@@ -145,18 +223,22 @@ int main(int argc , char *argv[])
                 }  
             }  
         }  
-            
+            puts("A");
         //else its some IO operation on some other socket
         for (i = 0; i < max_clients; i++)  
         {  
-            sd = client_socket[i];  
-                
+            sd = client_socket[i];
+            printf("%i\n", i);  
             if (FD_ISSET( sd , &readfds))  
             {  
                 //Check if it was for closing , and also read the 
                 //incoming message 
-                if ((valread = read( sd , buffer, 1024)) == 0)  
+                puts("hewwo");
+                valread = read( sd , buffer, 1024);
+                puts("VALREAD U LIL BITCH");
+                if (valread == 0)  
                 {  
+                    puts("1");
                     //Somebody disconnected , get his details and print 
                     getpeername(sd , (struct sockaddr*)&address , \
                         (socklen_t*)&addrlen);  
@@ -172,13 +254,18 @@ int main(int argc , char *argv[])
                 {  
                     //set the string terminating NULL byte on the end 
                     //of the data read 
-                    buffer[valread] = '\0';  
+                    puts("0");
+                    buffer[valread] = '\0'; 
+                    puts("C");
+                    char* new_message = strcat(value->name, buffer);
+                    puts("D");
                     int j;
-                    printf("%s", buffer);
+                    printf("incoming message! %s", new_message);
+
 
                     for (j = 0; j < max_clients; j++) {
                         if (client_socket[j] != 0 && j != i) {
-                            send(client_socket[j] , buffer , strlen(buffer) , 0 );  
+                            send(client_socket[j] , new_message , strlen(new_message) , 0 );  
                         }
 
                     }
@@ -186,6 +273,6 @@ int main(int argc , char *argv[])
             }  
         }  
     }  
-        
+
     return 0;  
 }  
