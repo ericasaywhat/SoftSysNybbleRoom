@@ -27,6 +27,8 @@ typedef struct data_struct_s
     char ip[KEY_MAX_LENGTH];
     char key_string[KEY_MAX_LENGTH];
     char *name;
+    int socket_file_descriptor;
+
 } data_struct_t;
 
 void copy_over_ip(data_struct_t *value, char* ip) {
@@ -196,6 +198,7 @@ int main(int argc , char *argv[])
             printf("new socket's name : %s \n", new_name);
 
             value->name = new_name;
+            value->socket_file_descriptor = new_socket;
             // send(new_socket , new_name , 50 , 0 );
             store_user_in_map(map, value);
 
