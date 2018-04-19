@@ -26,7 +26,7 @@ and other people can join their server by using the following command:
 telnet [INSERT SERVER IP ADDRESS HERE] 3000
 ```
 
-and the new clients are able to talk to type and talk to each other via their terminals. Clients are also able to enter commands using `!` to specify commands, and the server may enter the `!wumpus` command to play the Wumpus game.
+and the new clients are able to talk to type and talk to each other via their terminals. Clients are also able to enter commands using `!` to specify commands, and the server may enter the `!wumpus` command to play Hunt the Wumpus.
 
 Other features we have implemented include allowing each user to specify the name they would like to use when they are in the chat room and keeping track of the current clients using a hashmap. This hashmap keeps track of each client's IP address, their hash key, and their chat room username, which they can specify when they first enter the chat room server.
 
@@ -36,6 +36,6 @@ We have completed the chat room part of our project, although there are numerous
 
 * First, we want to allow the user to change their name in the chat room using a `!` command. Currently, we are able to retrieve commands using the `!` flag. In order to complete this task, we need to find a way to edit the hashmap in a way that allows a client to change their name whenever they want.
 
-* Second, we want to allow the clients to play the Wumpus game together by alternating turns - the Wumpus game is fully implemented, but currently, only the server is able to play the game, so we must implement a way for the server to help the clients play. Once implemented, each client will be able to enter a command, like `UP ARROW` or `UP MOVE`, and in this way, the player in the Wumpus game will be able to shoot and move.
+* Second, we want to allow the clients to play Hunt the Wumpus together by alternating turns - Hunt the Wumpus is fully implemented, but currently, only the server is able to play the game, so we must implement a way for the server to help the clients play. Once implemented, each client will be able to enter a command, like `UP ARROW` or `UP MOVE`, and in this way, the player in Hunt the Wumpus will be able to shoot and move.
 
 * Third, we would like to reorganize the code, since much of it is stuffed into the `main` function and it is difficult to navigate. We are fairly sure we can break down the `main` function into several helper functions, which should improve readability and debuggability.
