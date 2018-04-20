@@ -70,29 +70,28 @@ void setup_new_connection(map_t *map, int new_socket, struct sockaddr_in address
     char* query_name;
     char new_name[1024];
 
-    puts("#### NEW CONNECTION ####");
-    printf("Socket fd is %d    IP is : %s    Port : %d \n" , new_socket, inet_ntoa(address.sin_addr), ntohs(address.sin_port));
+    puts("#### ADDING NEW CONNECTION");
+    printf("#### SOCKET : %d, IP : %s, PORT : %d \n" , new_socket, inet_ntoa(address.sin_addr), ntohs(address.sin_port));
 
     copy_over_ip(value, inet_ntoa(address.sin_addr)); // store IP address
     snprintf(value->key_string, KEY_MAX_LENGTH, "%s%d", KEY_PREFIX, value->name); // store key
 
-    query_name = "What do you want to be called? : ";
+    query_name = "Hi there! What do you want to be called? : ";
     send(new_socket, query_name , strlen(query_name) , 0 );
     read(new_socket, new_name, 1024); // get name value
 
     new_name[strcspn(new_name, "\n")-1] = 0;
 
-    printf("New socket's name : %s \n", new_name);
+    printf("#### NEW SOCKET'S NAME : %s \n", new_name);
 
     value->name = new_name;
     value->socket_file_descriptor = new_socket;
     hashmap_put(map, value->key_string, value);
 
-    puts("#### NEW CONNECTION ADDED SUCCESSFULLY ####");
+    puts("#### NEW CONNECTION ADDED SUCCESSFULLY");
 }
 
-int main(int argc , char *argv[])
-{
+int main(int argc , char *argv[]) {
     // game_start();
     int opt = TRUE;
     int master_socket , addrlen , new_socket , client_socket[MAX_CLIENTS] ,
@@ -101,27 +100,19 @@ int main(int argc , char *argv[])
     struct sockaddr_in address;
     map_t *map;
     data_struct_t *value;
-
     char buffer[1025];  //data buffer of 1K
-
-    //set of socket descriptors
-    fd_set readfds;
-
-    //make the map
+    fd_set readfds; //set of socket descriptors
+    
     map = hashmap_new();
-
-    //a message
     char *message = "ECHO Daemon v1.0 \r\n";
 
     //initialise all client_socket[] to 0 so not checked
-    for (i = 0; i < max_clients; i++)
-    {
+    for (i = 0; i < max_clients; i++) {
         client_socket[i] = 0;
     }
 
     //create a master socket
-    if( (master_socket = socket(AF_INET , SOCK_STREAM , 0)) == 0)
-    {
+    if( (master_socket = socket(AF_INET , SOCK_STREAM , 0)) == 0) {
         perror("socket failed");
         exit(EXIT_FAILURE);
     }
@@ -202,8 +193,6 @@ int main(int argc , char *argv[])
 
             value = malloc(sizeof(data_struct_t)); // allocate a new value
             setup_new_connection(map, new_socket, address, value);
-            puts("hello");
-            //TODO test value here
 
             //send new connection greeting message
             if( send(new_socket, message, strlen(message), 0) != strlen(message) )
