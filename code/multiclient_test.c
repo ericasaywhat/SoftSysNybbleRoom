@@ -46,13 +46,6 @@ void copy_over_ip(data_struct_t *value, char* ip) {
     }
 }
 
-// char *trim (char *s) {
-//   int i = strlen(s)-1;
-//   if ((i > 0) && (s[i] == '\n'))
-//     s[i] = '\0';
-//   return s;
-// }
-
 void free_everything(map_t *map, char *ip, data_struct_t *value) {
     int error;
 
@@ -73,10 +66,30 @@ void free_everything(map_t *map, char *ip, data_struct_t *value) {
     hashmap_free(map);
 }
 
-void store_user_in_map(map_t *map, data_struct_t *value) {
-    hashmap_put(map, value->key_string, value);
-}
+void setup_new_connection(map_t *map, int new_socket, struct sockaddr_in address, data_struct_t *value) {
+    char* query_name;
+    char new_name[1024];
 
+    puts("#### NEW CONNECTION ####");
+    printf("Socket fd is %d    IP is : %s    Port : %d \n" , new_socket, inet_ntoa(address.sin_addr), ntohs(address.sin_port));
+
+    copy_over_ip(value, inet_ntoa(address.sin_addr)); // store IP address
+    snprintf(value->key_string, KEY_MAX_LENGTH, "%s%d", KEY_PREFIX, value->name); // store key
+
+    query_name = "What do you want to be called? : ";
+    send(new_socket, query_name , strlen(query_name) , 0 );
+    read(new_socket, new_name, 1024); // get name value
+
+    new_name[strcspn(new_name, "\n")-1] = 0;
+
+    printf("New socket's name : %s \n", new_name);
+
+    value->name = new_name;
+    value->socket_file_descriptor = new_socket;
+    hashmap_put(map, value->key_string, value);
+
+    puts("#### NEW CONNECTION ADDED SUCCESSFULLY ####");
+}
 
 int main(int argc , char *argv[])
 {
@@ -174,15 +187,12 @@ int main(int argc , char *argv[])
         //so wait indefinitely
         activity = select( max_sd + 1 , &readfds , NULL , NULL , NULL);
 
-        if ((activity < 0) && (errno!=EINTR))
-        {
+        if ((activity < 0) && (errno!=EINTR)) {
             printf("select error");
         }
 
-        //If something happened on the master socket ,
-        //then it's an incoming connection
-        if (FD_ISSET(master_socket, &readfds))
-        {
+        //If something happened on the master socket then it's an incoming connection
+        if (FD_ISSET(master_socket, &readfds)) {
             if ((new_socket = accept(master_socket,
                     (struct sockaddr *)&address, (socklen_t*)&addrlen))<0)
             {
@@ -190,30 +200,10 @@ int main(int argc , char *argv[])
                 exit(EXIT_FAILURE);
             }
 
-            char new_name[1024];
-
-            //inform user of socket number - used in send and receive commands
-            printf("New connection , socket fd is %d , ip is : %s , port : %d \n" , new_socket , inet_ntoa(address.sin_addr) , ntohs(address.sin_port));
-            value = malloc(sizeof(data_struct_t));
-            copy_over_ip(value, inet_ntoa(address.sin_addr)); // store IP address
-            snprintf(value->key_string, KEY_MAX_LENGTH, "%s%d", KEY_PREFIX, value->name); // store key
-
-            char* query = "What do you want to be called? : ";
-            send(new_socket , query , strlen(query) , 0 );
-            read(new_socket , new_name, 1024); // get name value
-
-            new_name[strcspn(new_name, "\n")-1] = 0;
-
-            // new_name = trim(new_name);
-
-            printf("new socket's name : %s \n", new_name);
-
-            value->name = new_name;
-            value->socket_file_descriptor = new_socket;
-            // send(new_socket , new_name , 50 , 0 );
-            store_user_in_map(map, value);
-
-            printf("User hashed successfully. Length of map : %i\n", hashmap_length(map));
+            value = malloc(sizeof(data_struct_t)); // allocate a new value
+            setup_new_connection(map, new_socket, address, value);
+            puts("hello");
+            //TODO test value here
 
             //send new connection greeting message
             if( send(new_socket, message, strlen(message), 0) != strlen(message) )
