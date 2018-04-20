@@ -13,6 +13,7 @@
 #include <assert.h>
 
 #include "hashmap.h"
+#include "main.h"
 
 #define TRUE   1
 #define FALSE  0
@@ -70,6 +71,7 @@ void store_user_in_map(map_t *map, data_struct_t *value) {
 
 int main(int argc , char *argv[])
 {
+    game_start();
     int opt = TRUE;
     int master_socket , addrlen , new_socket , client_socket[30] ,
           max_clients = 30 , activity, i , valread , sd;
@@ -233,8 +235,7 @@ int main(int argc , char *argv[])
             {
                 //Check if it was for closing , and also read the
                 //incoming message
-                valread = read( sd , buffer, 1024);
-                if (valread == 0)
+                if ((valread = read( sd , buffer, 1024)) == 0)
                 {
                     //Somebody disconnected , get his details and print
                     getpeername(sd , (struct sockaddr*)&address , \
