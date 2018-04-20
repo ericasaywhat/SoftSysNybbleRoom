@@ -40,12 +40,18 @@ typedef struct data_struct_s
 
 } data_struct_t;
 
+/**
+ * Copies the user's IP address into a value.
+ */
 void copy_over_ip(data_struct_t *value, char* ip) {
     for (int i = 0; i < strlen(ip); i++) {
         value->ip[i] = ip[i];
     }
 }
 
+/**
+ * Frees the hashmap and all values inside of it.
+ */
 void free_everything(map_t *map, char *ip, data_struct_t *value) {
     int error;
 
@@ -66,6 +72,9 @@ void free_everything(map_t *map, char *ip, data_struct_t *value) {
     hashmap_free(map);
 }
 
+/**
+ * Sets up a new connection and puts the resulting value into the hashmap.
+ */
 void setup_new_connection(map_t *map, int new_socket, struct sockaddr_in address, data_struct_t *value) {
     char* query_name;
     char new_name[1024];
