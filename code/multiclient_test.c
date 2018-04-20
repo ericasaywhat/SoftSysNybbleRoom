@@ -10,10 +10,18 @@
 #include <sys/socket.h>
 #include <netinet/in.h>
 #include <sys/time.h> //FD_SET, FD_ISSET, FD_ZERO macros
+
+
+// #include "main.h" //currently included in server_functions.c
+#include "server_functions.c"
+
+
+#define MAX_CLIENTS 30
+#define MAX_SERVER_MSG_LENGTH 512
+
 #include <assert.h>
 
 #include "hashmap.h"
-#include "main.h"
 
 #define TRUE   1
 #define FALSE  0
@@ -69,12 +77,13 @@ void store_user_in_map(map_t *map, data_struct_t *value) {
     hashmap_put(map, value->key_string, value);
 }
 
+
 int main(int argc , char *argv[])
 {
-    game_start();
+    // game_start();
     int opt = TRUE;
-    int master_socket , addrlen , new_socket , client_socket[30] ,
-          max_clients = 30 , activity, i , valread , sd;
+    int master_socket , addrlen , new_socket , client_socket[MAX_CLIENTS] ,
+          max_clients = MAX_CLIENTS , activity, i , valread , sd;
     int max_sd;
     struct sockaddr_in address;
     map_t *map;
@@ -240,33 +249,64 @@ int main(int argc , char *argv[])
                     //Somebody disconnected , get his details and print
                     getpeername(sd , (struct sockaddr*)&address , \
                         (socklen_t*)&addrlen);
-                    printf("Host disconnected , ip %s , port %d \n" , inet_ntoa(address.sin_addr) , ntohs(address.sin_port));
+                    printf("Host disconnected on socket %i, ip %s , port %d \n" , sd, inet_ntoa(address.sin_addr) , ntohs(address.sin_port));
 
                     //Close the socket and mark as 0 in list for reuse
                     close( sd );
                     client_socket[i] = 0;
                 }
 
-                //Echo back the message that came in
+                //Handle the message that came in
                 else
                 {
+                    char * messageToServer = malloc(sizeof(char)*MAX_SERVER_MSG_LENGTH);
+                    char * messageToCaller = malloc(sizeof(char)*MAX_SERVER_MSG_LENGTH);
+                    char * messageToOthers = malloc(sizeof(char)*MAX_SERVER_MSG_LENGTH);
                     //set the string terminating NULL byte on the end
                     //of the data read
-                    buffer[valread] = '\0';
-                    char* new_message = strcat(strcat(value->name, ": "), buffer);
-                    int j;
-
-
-                    for (j = 0; j < max_clients; j++) {
-                        if (client_socket[j] != 0 && j != i) {
-                            send(client_socket[j] , new_message , strlen(new_message) , 0 );
-                        }
-
+                    if (strncmp(buffer, "!wumpus", 7) == 0){
+                        printf("wumpus command recognized\n");
+                        game_start();
+                        continue;
                     }
+
+                    if (strncmp(buffer, "!test", 5) == 0){
+                        run_test(messageToServer, messageToCaller, messageToOthers);
+                        respond(client_socket, i, messageToServer, messageToCaller, messageToOthers);
+                        continue;
+                    }
+
+                    if (strncmp(buffer, "!name", 5) == 0){
+                        // printf("wumpus command recognized\n");
+                        void* p;
+                        change_name("_", "_", p, messageToServer, messageToCaller, messageToOthers);
+                        respond(client_socket, i, messageToServer, messageToCaller, messageToOthers);
+                        continue;
+                    }
+                    
+                    else {
+                        buffer[valread] = '\0';
+                        // printf("%s", buffer);
+                        // int k;
+                        // for (k = 0; k < max_clients; k++) {
+                        //     if (client_socket[k] != 0 && k != i) {
+                        //         send(client_socket[k] , buffer , strlen(buffer) , 0 );
+                        //     }
+
+                        // }
+
+                        char* new_message = strcat(strcat(value->name, ": "), buffer);
+                        printf("new_message is: %s\n", new_message);
+
+                        respond(client_socket, i, new_message, "", new_message);
+                    }
+
+
+
+
                 }
             }
         }
     }
-
     return 0;
 }
