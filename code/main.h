@@ -9,6 +9,8 @@
 #include <time.h>
 #include <unistd.h>
 
+#define MAX_CLIENTS 30
+
 #define WIDTH 5
 #define HEIGHT 5
 
