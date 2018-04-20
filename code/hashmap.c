@@ -283,6 +283,13 @@ int hashmap_put(map_t in, char* key, any_t value){
 	return MAP_OK;
 }
 
+/**
+ * Update the hashmap with a new value
+ */
+int hashmap_update(map_t in, char* key, any_t new_value){
+	hashmap_put(in, key, new_value);
+}
+
 /*
  * Get your pointer out of the hashmap with a key
  */
