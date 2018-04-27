@@ -10,23 +10,15 @@
 #include <sys/socket.h>
 #include <netinet/in.h>
 #include <sys/time.h> //FD_SET, FD_ISSET, FD_ZERO macros
-
-
-// #include "main.h" //currently included in server_functions.c
+#include <assert.h>
 #include "server_functions.c"
-
+#include "hashmap.h"
 
 #define MAX_CLIENTS 30
 #define MAX_SERVER_MSG_LENGTH 512
-
-#include <assert.h>
-
-#include "hashmap.h"
-
 #define TRUE   1
 #define FALSE  0
 #define PORT   3000
-
 #define KEY_MAX_LENGTH (256)
 #define KEY_PREFIX ("nybbles_")
 #define KEY_COUNT (1024*1024)
@@ -37,7 +29,6 @@ typedef struct data_struct_s
     char key_string[KEY_MAX_LENGTH];
     char *name;
     int socket_file_descriptor;
-
 } data_struct_t;
 
 /**
@@ -113,44 +104,36 @@ int main(int argc , char *argv[]) {
     fd_set readfds; //set of socket descriptors
     
     map = hashmap_new();
-    char *message = "ECHO Daemon v1.0 \r\n";
+    char *message = "#### SoftSys NybbleRoom v1.0 \r\n";
 
     //initialise all client_socket[] to 0 so not checked
     for (i = 0; i < max_clients; i++) {
         client_socket[i] = 0;
     }
 
-    //create a master socket
     if( (master_socket = socket(AF_INET , SOCK_STREAM , 0)) == 0) {
         perror("socket failed");
         exit(EXIT_FAILURE);
     }
 
-    //set master socket to allow multiple connections ,
-    //this is just a good habit, it will work without this
     if( setsockopt(master_socket, SOL_SOCKET, SO_REUSEADDR, (char *)&opt,
-          sizeof(opt)) < 0 )
-    {
+          sizeof(opt)) < 0 ) {
         perror("setsockopt");
         exit(EXIT_FAILURE);
     }
 
-    //type of socket created
     address.sin_family = AF_INET;
     address.sin_addr.s_addr = INADDR_ANY;
     address.sin_port = htons( PORT );
 
-    //bind the socket to localhost port 8888
-    if (bind(master_socket, (struct sockaddr *)&address, sizeof(address))<0)
-    {
+    if (bind(master_socket, (struct sockaddr *)&address, sizeof(address))<0) {
         perror("bind failed");
         exit(EXIT_FAILURE);
     }
+
     printf("Listener on port %d \n", PORT);
 
-    //try to specify maximum of 3 pending connections for the master socket
-    if (listen(master_socket, 3) < 0)
-    {
+    if (listen(master_socket, 3) < 0) {
         perror("listen");
         exit(EXIT_FAILURE);
     }
@@ -159,32 +142,21 @@ int main(int argc , char *argv[]) {
     addrlen = sizeof(address);
     puts("Waiting for connections ...");
 
-    while(TRUE)
-    {
-        //clear the socket set
-        FD_ZERO(&readfds);
-
-        //add master socket to set
+    while(TRUE) {
+        FD_ZERO(&readfds); // clear socket set
         FD_SET(master_socket, &readfds);
         max_sd = master_socket;
 
-        //add child sockets to set
-        for ( i = 0 ; i < max_clients ; i++)
-        {
-            //socket descriptor
+        for ( i = 0 ; i < max_clients ; i++) {
             sd = client_socket[i];
-
-            //if valid socket descriptor then add to read list
-            if(sd > 0)
+            if (sd > 0) {
                 FD_SET( sd , &readfds);
-
-            //highest file descriptor number, need it for the select function
-            if(sd > max_sd)
+            }
+            if (sd > max_sd) {
                 max_sd = sd;
+            }
         }
 
-        //wait for an activity on one of the sockets , timeout is NULL ,
-        //so wait indefinitely
         activity = select( max_sd + 1 , &readfds , NULL , NULL , NULL);
 
         if ((activity < 0) && (errno!=EINTR)) {
@@ -274,24 +246,12 @@ int main(int argc , char *argv[]) {
                     
                     else {
                         buffer[valread] = '\0';
-                        // printf("%s", buffer);
-                        // int k;
-                        // for (k = 0; k < max_clients; k++) {
-                        //     if (client_socket[k] != 0 && k != i) {
-                        //         send(client_socket[k] , buffer , strlen(buffer) , 0 );
-                        //     }
-
-                        // }
-
                         char* new_message = strcat(strcat(value->name, ": "), buffer);
                         printf("new_message is: %s\n", new_message);
-
                         respond(client_socket, i, new_message, "", new_message);
+                        memset(&buffer[0], 0, sizeof(buffer)); // clear the buffer
+                        printf("#### NEW MESSAGE : %s\n", new_message);
                     }
-
-
-
-
                 }
             }
         }
