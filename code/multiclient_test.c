@@ -249,8 +249,8 @@ int main(int argc , char *argv[]) {
                         char* new_message = strcat(strcat(value->name, ": "), buffer);
                         printf("new_message is: %s\n", new_message);
                         respond(client_socket, i, new_message, "", new_message);
-                        memset(&buffer[0], 0, sizeof(buffer)); // clear the buffer
-                        printf("#### NEW MESSAGE : %s\n", new_message);
+                        memset(new_message, 0 , 512);
+                        memset(buffer, 0 , 1024);
                     }
                 }
             }
