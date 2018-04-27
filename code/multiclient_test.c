@@ -274,19 +274,13 @@ int main(int argc , char *argv[]) {
                     
                     else {
                         buffer[valread] = '\0';
-                        // printf("%s", buffer);
-                        // int k;
-                        // for (k = 0; k < max_clients; k++) {
-                        //     if (client_socket[k] != 0 && k != i) {
-                        //         send(client_socket[k] , buffer , strlen(buffer) , 0 );
-                        //     }
-
-                        // }
 
                         char* new_message = strcat(strcat(value->name, ": "), buffer);
                         printf("new_message is: %s\n", new_message);
 
                         respond(client_socket, i, new_message, "", new_message);
+                        memset(new_message, 0 , 512);
+                        memset(buffer, 0 , 1024);
                     }
 
 
