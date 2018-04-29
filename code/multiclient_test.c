@@ -26,42 +26,55 @@ void free_everything(GHashTable* hash) {
  */
 void setup_new_connection(GHashTable* hash, int new_socket, struct sockaddr_in address, Value *value) {
     char* query_name;
-    char* new_name = malloc(sizeof(char) * MAX_USERNAME_SIZE);
+    char* new_name = malloc(sizeof(char) * MAX_USERNAME_SIZE); // TODO free this later
     char key_string[KEY_MAX_LENGTH];
+    char* dump;
 
-    printf(GRN "#### ADDING NEW CONNECTION\n" RESET);
-    printf(GRN "#### SOCKET : %d, IP : %s, PORT : %d \n" RESET, new_socket, inet_ntoa(address.sin_addr), ntohs(address.sin_port));
+    printf(GRN "ADDING NEW CONNECTION\n" RESET);
+    printf(GRN "SOCKET : %d, IP : %s, PORT : %d \n" RESET, new_socket, inet_ntoa(address.sin_addr), ntohs(address.sin_port));
 
     copy_over_ip(value, inet_ntoa(address.sin_addr)); // store IP address
-    printf(GRN "#### IP : %s\n" RESET, value->ip);
+    printf(GRN "IP : %s\n" RESET, value->ip);
     strcat(strcpy(key_string, KEY_PREFIX), value->ip);
-    printf(GRN "#### KEY_STRING : %s\n" RESET, key_string);
+    printf(GRN "KEY_STRING : %s\n" RESET, key_string);
     snprintf(value->key_string, KEY_MAX_LENGTH, "%s", key_string);
-    printf(GRN "#### STORED KEY_STRING : %s\n" RESET, value->key_string);
+    printf(GRN "STORED KEY_STRING : %s\n" RESET, value->key_string);
 
-    query_name = "Hi there! What do you want to be called? ";
+    query_name = "Hi there! Please choose your username (up to 10 characters): ";
     send(new_socket, query_name , strlen(query_name) , 0 );
     read(new_socket, new_name, MAX_USERNAME_SIZE); // get name value
 
     new_name[strcspn(new_name, "\n")-1] = 0;
 
-    printf(GRN "#### NEW SOCKET'S NAME : %s \n" RESET, new_name);
+    printf(GRN "NEW SOCKET'S NAME : %s \n" RESET, new_name);
 
     value->name = new_name;
     value->socket_file_descriptor = new_socket;
     char* copy = g_strdup(key_string);
     g_hash_table_insert(hash, copy, value);
 
-    printf(GRN "#### NEW CONNECTION ADDED SUCCESSFULLY!\n" RESET);
+    printf(GRN "NEW CONNECTION ADDED SUCCESSFULLY!\n" RESET);
 }
 
-void printEntry(gpointer key, gpointer value, gpointer userdata) {
+void remove_disconnected_user(GHashTable* hash, struct sockaddr_in address) {
+    char key_string[KEY_MAX_LENGTH];
+    strcat(strcpy(key_string, KEY_PREFIX), inet_ntoa(address.sin_addr));
+    char* copy = g_strdup(key_string);
+    gboolean ret = g_hash_table_remove(hash, copy);
+    if (ret) {
+        printf(RED "User successfully removed from hashtable.\n" RESET);
+    } else {
+        printf(RED "Oops! User could not be found in hashtable.\n" RESET);
+    }
+}
+
+void print_entry(gpointer key, gpointer value, gpointer userdata) {
     Value* v = (Value *)value;
     char* c = (char *)key;
     printf("%s : %s\n", c, v->name);
 }
 
-char* retrieveUsername(GHashTable* hash, char* ip) {
+char* retrieve_username(GHashTable* hash, char* ip) {
     char key_string[KEY_MAX_LENGTH];
     strcat(strcpy(key_string, KEY_PREFIX), ip);
     char* copy = g_strdup(key_string);
@@ -76,18 +89,19 @@ char* retrieveUsername(GHashTable* hash, char* ip) {
     }
 }
 
-void signalHandler(int sig) {
+void signal_handler(int sig) {
     char  c;
     signal(sig, SIG_IGN);
     printf(RED "\nAre you sure you want to quit? [y/n] " RESET);
     c = getchar();
     if (c == 'y' || c == 'Y'){
         printf(RED "Okay! Closing server...\n" RESET);
+        printf(WHT " \n" RESET); // Resets color in terminal
         // TODO free everything
         exit(0);
     }
     else{
-        signal(SIGINT, signalHandler);
+        signal(SIGINT, signal_handler);
     }
     getchar(); // Get new line character
 }
@@ -105,7 +119,7 @@ int main(int argc , char *argv[]) {
 
     GHashTable* hash = g_hash_table_new(g_str_hash, g_str_equal);
     
-    char *message = "#### Welcome to SoftSys NybbleRoom v1.0!!! \r\n";
+    char *message = "Welcome to the SoftSys NybbleRoom v1.0! \r\n";
 
     //initialise all client_socket[] to 0 so not checked
     for (i = 0; i < max_clients; i++) {
@@ -142,7 +156,7 @@ int main(int argc , char *argv[]) {
     //accept the incoming connection
     addrlen = sizeof(address);
     printf(BLU "Waiting for connections...\n" RESET);
-    signal(SIGINT, signalHandler);
+    signal(SIGINT, signal_handler);
     while(TRUE) {
         FD_ZERO(&readfds); // clear socket set
         FD_SET(master_socket, &readfds);
@@ -182,17 +196,12 @@ int main(int argc , char *argv[]) {
                 perror("send");
             }
 
-            printf(BLU "Welcome message sent successfully\n" RESET);
+            printf(BLU "Welcome message sent successfully!\n" RESET);
 
-            //add new socket to array of sockets
-            for (i = 0; i < max_clients; i++)
-            {
-                //if position is empty
-                if( client_socket[i] == 0 )
-                {
+            for (i = 0; i < max_clients; i++) {
+                if( client_socket[i] == 0 ) {
                     client_socket[i] = new_socket;
-                    printf(BLU "Adding to list of sockets as %d\n" RESET, i);
-
+                    printf(BLU "Adding to list of sockets as %d...\n" RESET, i);
                     break;
                 }
             }
@@ -211,7 +220,7 @@ int main(int argc , char *argv[]) {
                     getpeername(sd , (struct sockaddr*)&address , \
                         (socklen_t*)&addrlen);
                     printf(RED "Host disconnected on socket %i, ip %s , port %d \n" RESET, sd, inet_ntoa(address.sin_addr) , ntohs(address.sin_port));
-
+                    remove_disconnected_user(hash, address);
                     //Close the socket and mark as 0 in list for reuse
                     close( sd );
                     client_socket[i] = 0;
@@ -249,18 +258,18 @@ int main(int argc , char *argv[]) {
                         strcpy(newName, tempName+1);
 
                         change_name(hash, newName, inet_ntoa(address.sin_addr), messageToServer, messageToCaller, messageToOthers);
-                        printf(GRN "#### COMMAND DETECTED : %s\n", buffer);
+                        printf(GRN "COMMAND DETECTED : %s\n", buffer);
                         int callers[2];
                         callers[0] = i;
                         callers[1] = i+1;
-                        respondToGroup(client_socket, callers, 2, messageToServer, messageToCaller, messageToOthers);
+                        respond_to_group(client_socket, callers, 2, messageToServer, messageToCaller, messageToOthers);
 
                         continue;
                     }
                     
                     else {
                         buffer[valread] = '\0';
-                        char* username = retrieveUsername(hash, inet_ntoa(address.sin_addr));
+                        char* username = retrieve_username(hash, inet_ntoa(address.sin_addr));
                         char* username_copy;
                         strcpy(username_copy, username);
                         char* new_message = strcat(strcat(username_copy, " says: "), buffer);

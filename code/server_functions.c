@@ -1,6 +1,6 @@
 #include "utils.h"
 
-int valueInArray(int* array, int array_size, int value) {
+int val_in_array(int* array, int array_size, int value) {
     int i;
     for (i = 0; i < array_size; ++i) {
         if (array[i] == value) {
@@ -39,7 +39,7 @@ int respond(int* client_socket, int caller, char* messageToServer, char * messag
 }
 
 //Sends one message to each socket in callerGroup and another socket to everyone else. Bad time complexity.
-int respondToGroup (int* client_socket, int* callerGroup, int groupSize, char* messageToServer, char * messageToCaller, char * messageToOthers) {
+int respond_to_group (int* client_socket, int* callerGroup, int groupSize, char* messageToServer, char * messageToCaller, char * messageToOthers) {
     printf("%s", messageToServer);
 
     int i;
@@ -49,7 +49,7 @@ int respondToGroup (int* client_socket, int* callerGroup, int groupSize, char* m
 
     int j;
     for (j = 0; j < MAX_CLIENTS; j++) {
-        int isCaller =  valueInArray(callerGroup, groupSize, j);
+        int isCaller =  val_in_array(callerGroup, groupSize, j);
         if (client_socket[j] != 0 && isCaller == 0) {
             send(client_socket[j] , messageToOthers , strlen(messageToOthers) , 0 );
         }
@@ -62,7 +62,7 @@ int change_name(GHashTable* hash, char* tempName, char* ip, char* messageToServe
     char* newName = g_strdup(tempName);
     char* key_string = malloc(sizeof(char) * KEY_MAX_LENGTH);
     strcat(strcpy(key_string, KEY_PREFIX), ip);
-    printf(GRN "#### REPLACING KEY_STRING VALUE AT : %s\n" RESET, key_string);
+    printf(GRN "REPLACING KEY_STRING VALUE AT : %s\n" RESET, key_string);
     // char* copy = g_strdup(key_string);
     gpointer ret = g_hash_table_lookup(hash, key_string);
     
@@ -76,9 +76,9 @@ int change_name(GHashTable* hash, char* tempName, char* ip, char* messageToServe
         strcpy(messageToCaller, "Name changed successfully!\n\0");
         strcpy(messageToOthers, "Someone else changed their name!\n\0");
 
-        printf(GRN "#### LOOKUP %s : %s\n" RESET, value->name, ((Value *)g_hash_table_lookup(hash, key_string))->name);
+        printf(GRN "LOOKUP %s : %s\n" RESET, value->name, ((Value *)g_hash_table_lookup(hash, key_string))->name);
     } else {
-        printf(RED "Oops! The user was not in the map yet\n" RESET);
+        printf(RED "Oops! The user was not in the map yet.\n" RESET);
     }
 
     
