@@ -244,8 +244,8 @@ int main(int argc , char *argv[]) {
                         respond(client_socket, i, messageToServer, messageToCaller, messageToOthers);
                         continue;
                     }
-                    if (strncmp(buffer, "!rpr", 4) == 0){
-                        puts("rpr command recognized\n");
+                    if (strncmp(buffer, "!rps", 4) == 0){
+                        puts("rps command recognized\n");
 
                         char *query_name = "Who would you like to play?\n";
                         char player_name[1024];
