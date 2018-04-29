@@ -13,9 +13,6 @@
 #include <assert.h>
 #include "server_functions.c"
 
-#include <glib.h>
-#include <glib/gstdio.h>
-
 #define MAX_CLIENTS 30
 #define MAX_SERVER_MSG_LENGTH 512
 #define TRUE   1
@@ -78,7 +75,7 @@ void setup_new_connection(GHashTable* hash, int new_socket, struct sockaddr_in a
 
     value->name = new_name;
     value->socket_file_descriptor = new_socket;
-    g_hash_table_insert(hash, &key_string, &value);
+    g_hash_table_insert(hash, &key_string, &value); // insert user into hashtable (ip addres => info)
 
     puts("#### NEW CONNECTION ADDED SUCCESSFULLY!");
 }
@@ -229,9 +226,7 @@ int main(int argc , char *argv[]) {
                     }
 
                     if (strncmp(buffer, "!name", 5) == 0){
-                        // printf("wumpus command recognized\n");
-                        void* p;
-                        change_name("_", "_", p, messageToServer, messageToCaller, messageToOthers);
+                        change_name("_", "_", hash, messageToServer, messageToCaller, messageToOthers);
                         // respond(client_socket, i, messageToServer, messageToCaller, messageToOthers);
                         int callers[2];
                         callers[0] = i;

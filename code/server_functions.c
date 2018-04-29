@@ -2,6 +2,9 @@
 #include <string.h>   //strlen
 #include <sys/socket.h> //send
 
+#include <glib.h>
+#include <glib/gstdio.h>
+
 // #define MAX_CLIENTS 30 //currently defined in main.h - we should pull this stuff out into another .h file.
 #include "main.h"
 #define MAX_SERVER_MSG_LENGTH 512
@@ -64,7 +67,7 @@ int respondToGroup (int* client_socket, int* callerGroup, int groupSize, char* m
 
 }
 
-int change_name(char* newName, char* ipAddress, void* pointerToHashmap, char* messageToServer, char* messageToCaller, char *messageToOthers) {
+int change_name(char* newName, char* ipAddress, GHashTable* hash, char* messageToServer, char* messageToCaller, char *messageToOthers) {
     // if(isValidIP(ipAddress) && isValidName(newName)){
     //     pointerToHashmap.insert(ipAddress,newName); //pseudocode
         strcpy(messageToServer, "name change detected.\n");
