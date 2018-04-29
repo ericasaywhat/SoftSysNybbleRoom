@@ -1,10 +1,3 @@
-#include <stdio.h>
-#include <string.h>   //strlen
-#include <sys/socket.h> //send
-
-#include <glib.h>
-#include <glib/gstdio.h>
-#include "main.h"
 #include "utils.h"
 
 typedef struct data_struct_s {

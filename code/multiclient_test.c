@@ -1,16 +1,6 @@
 //Example code: A simple server side code, which echos back the received message.
 //Handle multiple socket connections with select and fd_set on Linux
-#include <stdio.h>
-#include <string.h>   //strlen
-#include <stdlib.h>
-#include <errno.h>
-#include <unistd.h>   //close
-#include <arpa/inet.h>    //close
-#include <sys/types.h>
-#include <sys/socket.h>
-#include <netinet/in.h>
-#include <sys/time.h> //FD_SET, FD_ISSET, FD_ZERO macros
-#include <assert.h>
+
 #include "server_functions.c"
 
 /**
@@ -67,7 +57,8 @@ void setup_new_connection(GHashTable* hash, int new_socket, struct sockaddr_in a
 
 void printEntry(gpointer key, gpointer value, gpointer userdata) {
     Value* v = (Value *)value;
-    printf("%s : %s\n", key, v->name);
+    char* c = (char *)key;
+    printf("%s : %s\n", c, v->name);
 }
 
 char* retrieveUsername(GHashTable* hash, char* ip) {
