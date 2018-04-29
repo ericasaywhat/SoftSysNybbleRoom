@@ -18,16 +18,7 @@
 #define TRUE   1
 #define FALSE  0
 #define PORT   3000
-#define KEY_MAX_LENGTH (256)
-#define KEY_PREFIX ("nybbles_")
 #define KEY_COUNT (1024*1024)
-
-typedef struct data_struct_s {
-    char ip[KEY_MAX_LENGTH];
-    char key_string[KEY_MAX_LENGTH];
-    char *name;
-    int socket_file_descriptor;
-} Value;
 
 /**
  * Copies the user's IP address into a value.
@@ -75,7 +66,8 @@ void setup_new_connection(GHashTable* hash, int new_socket, struct sockaddr_in a
 
     value->name = new_name;
     value->socket_file_descriptor = new_socket;
-    g_hash_table_insert(hash, &key_string, &value); // insert user into hashtable (ip addres => info)
+    char* copy = g_strdup(key_string);
+    g_hash_table_insert(hash, copy, &value); // insert user into hashtable (ip addres => info)
 
     puts("#### NEW CONNECTION ADDED SUCCESSFULLY!");
 }
@@ -226,7 +218,7 @@ int main(int argc , char *argv[]) {
                     }
 
                     if (strncmp(buffer, "!name", 5) == 0){
-                        change_name("_", "_", hash, messageToServer, messageToCaller, messageToOthers);
+                        change_name(hash, "_newname_", inet_ntoa(address.sin_addr), messageToServer, messageToCaller, messageToOthers);
                         // respond(client_socket, i, messageToServer, messageToCaller, messageToOthers);
                         int callers[2];
                         callers[0] = i;

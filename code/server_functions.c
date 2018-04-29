@@ -9,6 +9,16 @@
 #include "main.h"
 #define MAX_SERVER_MSG_LENGTH 512
 
+#define KEY_PREFIX ("nybbles_")
+#define KEY_MAX_LENGTH (256)
+
+typedef struct data_struct_s {
+    char ip[KEY_MAX_LENGTH];
+    char key_string[KEY_MAX_LENGTH];
+    char *name;
+    int socket_file_descriptor;
+} Value;
+
 int valueInArray(int* array, int array_size, int value) {
     int i;
     for (i = 0; i < array_size; ++i) {
@@ -67,17 +77,28 @@ int respondToGroup (int* client_socket, int* callerGroup, int groupSize, char* m
 
 }
 
-int change_name(char* newName, char* ipAddress, GHashTable* hash, char* messageToServer, char* messageToCaller, char *messageToOthers) {
-    // if(isValidIP(ipAddress) && isValidName(newName)){
-    //     pointerToHashmap.insert(ipAddress,newName); //pseudocode
+int change_name(GHashTable* hash, char* newName, char* ip, char* messageToServer, char* messageToCaller, char *messageToOthers) {
+    char key_string[KEY_MAX_LENGTH]; // TODO move KEY_MAX_LENGTH to this file
+    strcat(strcpy(key_string, KEY_PREFIX), ip);
+    printf("#### REPLACING KEY_STRING VALUE AT : %s\n", key_string);
+    char* copy = g_strdup(key_string);
+    gpointer ret = g_hash_table_lookup(hash, copy);
+    
+    if (ret != NULL) {
+        Value *value = (Value *)ret;
+        value->name = newName;
+        g_hash_table_replace(hash, copy, value);
+
         strcpy(messageToServer, "name change detected.\n");
         strcpy(messageToCaller, "name changed successfully\n\0");
         strcpy(messageToOthers, "someone else changed their name\n\0");
 
-        // return 0;
-    // } else {
-    //     return 1;
-    // }
+        printf("#### LOOKUP %s : %s\n", newName, ((Value *)g_hash_table_lookup(hash, copy))->name);
+    } else {
+        puts("User was not in the map yet");
+    }
+
+    
 }
 
 int run_test(char* messageToServer, char* messageToCaller, char* messageToOthers) {
