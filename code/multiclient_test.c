@@ -76,6 +76,22 @@ char* retrieveUsername(GHashTable* hash, char* ip) {
     }
 }
 
+void signalHandler(int sig) {
+    char  c;
+    signal(sig, SIG_IGN);
+    printf(RED "\nAre you sure you want to quit? [y/n] " RESET);
+    c = getchar();
+    if (c == 'y' || c == 'Y'){
+        printf(RED "Okay! Closing server...\n" RESET);
+        // TODO free everything
+        exit(0);
+    }
+    else{
+        signal(SIGINT, signalHandler);
+    }
+    getchar(); // Get new line character
+}
+
 int main(int argc , char *argv[]) {
     // game_start();
     int opt = TRUE;
@@ -126,7 +142,7 @@ int main(int argc , char *argv[]) {
     //accept the incoming connection
     addrlen = sizeof(address);
     printf(BLU "Waiting for connections...\n" RESET);
-
+    signal(SIGINT, signalHandler);
     while(TRUE) {
         FD_ZERO(&readfds); // clear socket set
         FD_SET(master_socket, &readfds);
@@ -259,3 +275,4 @@ int main(int argc , char *argv[]) {
     }
     return 0;
 }
+

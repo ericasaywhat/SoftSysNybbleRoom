@@ -1,12 +1,5 @@
 #include "utils.h"
 
-typedef struct data_struct_s {
-    char *name;
-    char ip[KEY_MAX_LENGTH];
-    char key_string[KEY_MAX_LENGTH];
-    int socket_file_descriptor;
-} Value;
-
 int valueInArray(int* array, int array_size, int value) {
     int i;
     for (i = 0; i < array_size; ++i) {

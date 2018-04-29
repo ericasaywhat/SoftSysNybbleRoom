@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include <string.h>   //strlen
 #include <stdlib.h>
+#include <signal.h>
 #include <errno.h>
 #include <unistd.h>   //close
 #include <arpa/inet.h>    //close
@@ -31,3 +32,10 @@
 #define CYN   "\x1B[36m"
 #define WHT   "\x1B[37m"
 #define RESET "\x1B[0m"
+
+typedef struct data_struct_s {
+    char *name;
+    char ip[KEY_MAX_LENGTH];
+    char key_string[KEY_MAX_LENGTH];
+    int socket_file_descriptor;
+} Value;

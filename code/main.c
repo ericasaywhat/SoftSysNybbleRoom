@@ -11,6 +11,8 @@
  */
 
 #include "main.h"
+#define RESET "\x1B[0m"
+#define RED   "\x1B[31m"
 
 /*
  * Creates the game Map, including placing Objects on the Map.
@@ -412,7 +414,7 @@ void INThandler(int sig) {
     char  c;
 
     signal(sig, SIG_IGN);
-    printf("\nAre you sure you want to quit? [y/n] ");
+    printf(RED "\nAre you sure you want to quit? [y/n] " RESET);
     c = getchar();
     if (c == 'y' || c == 'Y'){
         free_objects(); // free objects before map
