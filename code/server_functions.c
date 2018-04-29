@@ -13,7 +13,7 @@
 
 //Sends one message to caller and one message to others.
 int respond(int* client_socket, int caller, char* messageToServer, char * messageToCaller, char * messageToOthers) {
-    
+
     printf("%s", messageToServer);
 
     if(caller>-1){

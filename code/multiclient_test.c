@@ -12,6 +12,7 @@
 #include <sys/time.h> //FD_SET, FD_ISSET, FD_ZERO macros
 #include <assert.h>
 #include "server_functions.c"
+#include "rock_paper_scissors.c"
 #include "hashmap.h"
 
 #define MAX_CLIENTS 30
@@ -102,7 +103,7 @@ int main(int argc , char *argv[]) {
     data_struct_t *value;
     char buffer[1025];  //data buffer of 1K
     fd_set readfds; //set of socket descriptors
-    
+
     map = hashmap_new();
     char *message = "#### SoftSys NybbleRoom v1.0 \r\n";
 
@@ -243,7 +244,19 @@ int main(int argc , char *argv[]) {
                         respond(client_socket, i, messageToServer, messageToCaller, messageToOthers);
                         continue;
                     }
-                    
+                    if (strncmp(buffer, "!rpr", 4) == 0){
+                        puts("rpr command recognized\n");
+
+                        char *query_name = "Who would you like to play?\n";
+                        char player_name[1024];
+                        send(client_socket[i], query_name , strlen(query_name) , 0 );
+                        read(client_socket[i], player_name, 1024);
+                        //find player socket from hashtable
+                        int player_socket = client_socket[i+1]; //temp player socket
+                        playrps(client_socket[i], player_socket);
+                        continue;
+                    }
+
                     else {
                         buffer[valread] = '\0';
                         char* new_message = strcat(strcat(value->name, ": "), buffer);
