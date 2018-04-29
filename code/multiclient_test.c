@@ -43,7 +43,7 @@ void free_everything(GHashTable* hash) {
  */
 void setup_new_connection(GHashTable* hash, int new_socket, struct sockaddr_in address, Value *value) {
     char* query_name;
-    char new_name[1024];
+    char* new_name = malloc(sizeof(char) * 1024);
     char key_string[KEY_MAX_LENGTH];
 
     puts("#### ADDING NEW CONNECTION");
@@ -67,9 +67,32 @@ void setup_new_connection(GHashTable* hash, int new_socket, struct sockaddr_in a
     value->name = new_name;
     value->socket_file_descriptor = new_socket;
     char* copy = g_strdup(key_string);
-    g_hash_table_insert(hash, copy, &value); // insert user into hashtable (ip addres => info)
+    g_hash_table_insert(hash, copy, value);
 
     puts("#### NEW CONNECTION ADDED SUCCESSFULLY!");
+}
+
+void printEntry(gpointer key, gpointer value, gpointer userdata) {
+    Value* v = (Value *)value;
+    printf("%s : %s\n", key, v->name);
+}
+
+char* retrieveUsername(GHashTable* hash, char* ip) {
+    g_hash_table_foreach(hash, printEntry, NULL);
+    char key_string[KEY_MAX_LENGTH];
+    strcat(strcpy(key_string, KEY_PREFIX), ip);
+    char* copy = g_strdup(key_string);
+    gpointer ret = g_hash_table_lookup(hash, copy);
+
+    if (ret != NULL) {
+        // puts("name found");
+        Value *value = (Value *)ret;
+        // printf("%s\n", value->name);
+        return value->name;
+    } else {
+        puts("name not found");
+        return NULL;
+    }
 }
 
 int main(int argc , char *argv[]) {
@@ -217,9 +240,19 @@ int main(int argc , char *argv[]) {
                         continue;
                     }
 
-                    if (strncmp(buffer, "!name", 5) == 0){
-                        change_name(hash, "_newname_", inet_ntoa(address.sin_addr), messageToServer, messageToCaller, messageToOthers);
-                        // respond(client_socket, i, messageToServer, messageToCaller, messageToOthers);
+                    if (strncmp(buffer, "!name", 5) == 0) {
+                        char separator = ' ';
+                        char * const tempName = strchr(buffer, separator);
+                        if(tempName != NULL) {
+                          *tempName = '\0';
+                        }
+
+                        printf("New name : %s end\n", tempName+1);
+                        char newName[100];
+                        strcpy(newName, tempName+1);
+
+                        change_name(hash, newName, inet_ntoa(address.sin_addr), messageToServer, messageToCaller, messageToOthers);
+                        printf("command detected: %s\n", buffer);
                         int callers[2];
                         callers[0] = i;
                         callers[1] = i+1;
@@ -230,7 +263,10 @@ int main(int argc , char *argv[]) {
                     
                     else {
                         buffer[valread] = '\0';
-                        char* new_message = strcat(strcat(value->name, ": "), buffer);
+                        char* username = retrieveUsername(hash, inet_ntoa(address.sin_addr));
+                        char* username_copy;
+                        strcpy(username_copy, username);
+                        char* new_message = strcat(strcat(username_copy, " says: "), buffer);
                         printf("new_message is: %s\n", new_message);
                         respond(client_socket, i, new_message, "", new_message);
                         memset(new_message, 0 , 512);
