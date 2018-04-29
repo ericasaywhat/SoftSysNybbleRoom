@@ -4,7 +4,7 @@
 
 // #define MAX_CLIENTS 30 //currently defined in main.h - we should pull this stuff out into another .h file.
 #include "main.h"
-
+#define MAX_SERVER_MSG_LENGTH 512
 
 int valueInArray(int* array, int array_size, int value) {
     int i;
@@ -16,8 +16,6 @@ int valueInArray(int* array, int array_size, int value) {
     return 0;
 }
 
-
-
 //messageToServer, messageToCaller and messageToOther need to be malloc-ed with a maximum size. They'll be freed when the server shuts down?
 
 //Sends one message to caller and one message to others.
@@ -25,16 +23,25 @@ int respond(int* client_socket, int caller, char* messageToServer, char * messag
     
     printf("%s", messageToServer);
 
+    int ret = 0;
+
     if(caller>-1){
-        send(client_socket[caller], messageToCaller, strlen(messageToCaller), 0);
+        ret = send(client_socket[caller], messageToCaller, strlen(messageToCaller), 0);
+        if (ret == -1) {
+            return -1;
+        }
     }
+
     int j;
     for (j = 0; j < MAX_CLIENTS; j++) {
         if (client_socket[j] != 0 && j != caller) {
-            send(client_socket[j] , messageToOthers , strlen(messageToOthers) , 0 );
+            ret = send(client_socket[j] , messageToOthers , strlen(messageToOthers) , 0 );
+            if (ret == -1) {
+                return -1;
+            }
         }
-
     }
+    return ret;
 }
 
 //Sends one message to each socket in callerGroup and another socket to everyone else. Bad time complexity.

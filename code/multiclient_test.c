@@ -12,7 +12,9 @@
 #include <sys/time.h> //FD_SET, FD_ISSET, FD_ZERO macros
 #include <assert.h>
 #include "server_functions.c"
-#include "hashmap.h"
+
+#include <glib.h>
+#include <glib/gstdio.h>
 
 #define MAX_CLIENTS 30
 #define MAX_SERVER_MSG_LENGTH 512
@@ -23,58 +25,48 @@
 #define KEY_PREFIX ("nybbles_")
 #define KEY_COUNT (1024*1024)
 
-typedef struct data_struct_s
-{
+typedef struct data_struct_s {
     char ip[KEY_MAX_LENGTH];
     char key_string[KEY_MAX_LENGTH];
     char *name;
     int socket_file_descriptor;
-} data_struct_t;
+} Value;
 
 /**
  * Copies the user's IP address into a value.
  */
-void copy_over_ip(data_struct_t *value, char* ip) {
+void copy_over_ip(Value *value, char* ip) {
     for (int i = 0; i < strlen(ip); i++) {
         value->ip[i] = ip[i];
     }
 }
 
 /**
- * Frees the hashmap and all values inside of it.
+ * Frees the hashtable and all values inside of it.
  */
-void free_everything(map_t *map, char *ip, data_struct_t *value) {
-    int error;
-
-    /* Free all of the values we allocated and remove them from the map */
-    for (int index=0; index<KEY_COUNT; index+=1)
-    {
-        snprintf(ip, KEY_MAX_LENGTH, "%s%d", KEY_PREFIX, index);
-
-        error = hashmap_get(map, ip, (void**)(&value));
-        assert(error==MAP_OK);
-
-        error = hashmap_remove(map, ip);
-        assert(error==MAP_OK);
-
-        free(value);
-    }
-
-    hashmap_free(map);
+void free_everything(GHashTable* hash) {
+    g_hash_table_destroy(hash);
+    // TODO: Free any dynamically allocated values?
+    // TODO: Free everything else
 }
 
 /**
- * Sets up a new connection and puts the resulting value into the hashmap.
+ * Sets up a new connection and puts the resulting value into the hashtable.
  */
-void setup_new_connection(map_t *map, int new_socket, struct sockaddr_in address, data_struct_t *value) {
+void setup_new_connection(GHashTable* hash, int new_socket, struct sockaddr_in address, Value *value) {
     char* query_name;
     char new_name[1024];
+    char key_string[KEY_MAX_LENGTH];
 
     puts("#### ADDING NEW CONNECTION");
     printf("#### SOCKET : %d, IP : %s, PORT : %d \n" , new_socket, inet_ntoa(address.sin_addr), ntohs(address.sin_port));
 
     copy_over_ip(value, inet_ntoa(address.sin_addr)); // store IP address
-    snprintf(value->key_string, KEY_MAX_LENGTH, "%s%d", KEY_PREFIX, value->name); // store key
+    printf("#### IP : %s\n", value->ip);
+    strcat(strcpy(key_string, KEY_PREFIX), value->ip);
+    printf("#### KEY_STRING : %s\n", key_string);
+    snprintf(value->key_string, KEY_MAX_LENGTH, "%s", key_string);
+    printf("#### STORED KEY_STRING : %s\n", value->key_string);
 
     query_name = "Hi there! What do you want to be called? : ";
     send(new_socket, query_name , strlen(query_name) , 0 );
@@ -86,9 +78,9 @@ void setup_new_connection(map_t *map, int new_socket, struct sockaddr_in address
 
     value->name = new_name;
     value->socket_file_descriptor = new_socket;
-    hashmap_put(map, value->key_string, value);
+    g_hash_table_insert(hash, &key_string, &value);
 
-    puts("#### NEW CONNECTION ADDED SUCCESSFULLY");
+    puts("#### NEW CONNECTION ADDED SUCCESSFULLY!");
 }
 
 int main(int argc , char *argv[]) {
@@ -98,12 +90,12 @@ int main(int argc , char *argv[]) {
           max_clients = MAX_CLIENTS , activity, i , valread , sd;
     int max_sd;
     struct sockaddr_in address;
-    map_t *map;
-    data_struct_t *value;
+    Value *value;
     char buffer[1025];  //data buffer of 1K
     fd_set readfds; //set of socket descriptors
+
+    GHashTable* hash = g_hash_table_new(g_str_hash, g_str_equal);
     
-    map = hashmap_new();
     char *message = "#### SoftSys NybbleRoom v1.0 \r\n";
 
     //initialise all client_socket[] to 0 so not checked
@@ -172,8 +164,8 @@ int main(int argc , char *argv[]) {
                 exit(EXIT_FAILURE);
             }
 
-            value = malloc(sizeof(data_struct_t)); // allocate a new value
-            setup_new_connection(map, new_socket, address, value);
+            value = malloc(sizeof(Value)); // allocate a new value
+            setup_new_connection(hash, new_socket, address, value);
 
             //send new connection greeting message
             if( send(new_socket, message, strlen(message), 0) != strlen(message) )
