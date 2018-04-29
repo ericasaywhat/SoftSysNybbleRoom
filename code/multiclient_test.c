@@ -240,7 +240,12 @@ int main(int argc , char *argv[]) {
                         // printf("wumpus command recognized\n");
                         void* p;
                         change_name("_", "_", p, messageToServer, messageToCaller, messageToOthers);
-                        respond(client_socket, i, messageToServer, messageToCaller, messageToOthers);
+                        // respond(client_socket, i, messageToServer, messageToCaller, messageToOthers);
+                        int callers[2];
+                        callers[0] = i;
+                        callers[1] = i+1;
+                        respondMultipleCallers(client_socket, callers, 2, messageToServer, messageToCaller, messageToOthers);
+
                         continue;
                     }
                     

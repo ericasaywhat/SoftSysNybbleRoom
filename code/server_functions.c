@@ -6,6 +6,15 @@
 #include "main.h"
 
 
+int valueInArray(int* array, int array_size, int value) {
+    int i;
+    for (i = 0; i < array_size; ++i) {
+        if (array[i] == value) {
+            return 1;
+        }
+    }
+    return 0;
+}
 
 
 
@@ -26,6 +35,26 @@ int respond(int* client_socket, int caller, char* messageToServer, char * messag
         }
 
     }
+}
+
+//Sends one message to each socket in callers and another socket to everyone else. Bad time complexity.
+int respondMultipleCallers (int* client_socket, int* callers, int numCallers, char* messageToServer, char * messageToCaller, char * messageToOthers) {
+    printf("%s", messageToServer);
+
+    int i;
+    for (i = 0; i<numCallers; i++){
+        send(client_socket[callers[i]], messageToCaller, strlen(messageToCaller), 0);
+    }
+
+    int j;
+    for (j = 0; j < MAX_CLIENTS; j++) {
+        int isCaller =  valueInArray(callers, numCallers, j);
+        if (client_socket[j] != 0 && isCaller == 0) {
+            send(client_socket[j] , messageToOthers , strlen(messageToOthers) , 0 );
+        }
+
+    }
+
 }
 
 int change_name(char* newName, char* ipAddress, void* pointerToHashmap, char* messageToServer, char* messageToCaller, char *messageToOthers) {
