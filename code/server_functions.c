@@ -69,7 +69,7 @@ int change_name(GHashTable* hash, char* tempName, char* ip, char* messageToServe
     char* newName = g_strdup(tempName);
     char* key_string = malloc(sizeof(char) * KEY_MAX_LENGTH);
     strcat(strcpy(key_string, KEY_PREFIX), ip);
-    printf("#### REPLACING KEY_STRING VALUE AT : %s\n", key_string);
+    printf(GRN "#### REPLACING KEY_STRING VALUE AT : %s\n" RESET, key_string);
     // char* copy = g_strdup(key_string);
     gpointer ret = g_hash_table_lookup(hash, key_string);
     
@@ -79,13 +79,13 @@ int change_name(GHashTable* hash, char* tempName, char* ip, char* messageToServe
         value->name = newName;
         g_hash_table_replace(hash, key_string, value);
 
-        strcpy(messageToServer, "name change detected.\n\0");
-        strcpy(messageToCaller, "name changed successfully\n\0");
-        strcpy(messageToOthers, "someone else changed their name\n\0");
+        strcpy(messageToServer, "Name change detected.\n\0");
+        strcpy(messageToCaller, "Name changed successfully!\n\0");
+        strcpy(messageToOthers, "Someone else changed their name!\n\0");
 
-        printf("#### LOOKUP %s : %s\n", value->name, ((Value *)g_hash_table_lookup(hash, key_string))->name);
+        printf(GRN "#### LOOKUP %s : %s\n" RESET, value->name, ((Value *)g_hash_table_lookup(hash, key_string))->name);
     } else {
-        puts("User was not in the map yet");
+        printf(RED "Oops! The user was not in the map yet\n" RESET);
     }
 
     

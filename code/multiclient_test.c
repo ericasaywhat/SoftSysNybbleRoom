@@ -29,15 +29,15 @@ void setup_new_connection(GHashTable* hash, int new_socket, struct sockaddr_in a
     char* new_name = malloc(sizeof(char) * MAX_USERNAME_SIZE);
     char key_string[KEY_MAX_LENGTH];
 
-    puts("#### ADDING NEW CONNECTION");
-    printf("#### SOCKET : %d, IP : %s, PORT : %d \n" , new_socket, inet_ntoa(address.sin_addr), ntohs(address.sin_port));
+    printf(GRN "#### ADDING NEW CONNECTION\n" RESET);
+    printf(GRN "#### SOCKET : %d, IP : %s, PORT : %d \n" RESET, new_socket, inet_ntoa(address.sin_addr), ntohs(address.sin_port));
 
     copy_over_ip(value, inet_ntoa(address.sin_addr)); // store IP address
-    printf("#### IP : %s\n", value->ip);
+    printf(GRN "#### IP : %s\n" RESET, value->ip);
     strcat(strcpy(key_string, KEY_PREFIX), value->ip);
-    printf("#### KEY_STRING : %s\n", key_string);
+    printf(GRN "#### KEY_STRING : %s\n" RESET, key_string);
     snprintf(value->key_string, KEY_MAX_LENGTH, "%s", key_string);
-    printf("#### STORED KEY_STRING : %s\n", value->key_string);
+    printf(GRN "#### STORED KEY_STRING : %s\n" RESET, value->key_string);
 
     query_name = "Hi there! What do you want to be called? ";
     send(new_socket, query_name , strlen(query_name) , 0 );
@@ -45,14 +45,14 @@ void setup_new_connection(GHashTable* hash, int new_socket, struct sockaddr_in a
 
     new_name[strcspn(new_name, "\n")-1] = 0;
 
-    printf("#### NEW SOCKET'S NAME : %s \n", new_name);
+    printf(GRN "#### NEW SOCKET'S NAME : %s \n" RESET, new_name);
 
     value->name = new_name;
     value->socket_file_descriptor = new_socket;
     char* copy = g_strdup(key_string);
     g_hash_table_insert(hash, copy, value);
 
-    puts("#### NEW CONNECTION ADDED SUCCESSFULLY!");
+    printf(GRN "#### NEW CONNECTION ADDED SUCCESSFULLY!\n" RESET);
 }
 
 void printEntry(gpointer key, gpointer value, gpointer userdata) {
@@ -89,7 +89,7 @@ int main(int argc , char *argv[]) {
 
     GHashTable* hash = g_hash_table_new(g_str_hash, g_str_equal);
     
-    char *message = "#### SoftSys NybbleRoom v1.0 \r\n";
+    char *message = "#### Welcome to SoftSys NybbleRoom v1.0!!! \r\n";
 
     //initialise all client_socket[] to 0 so not checked
     for (i = 0; i < max_clients; i++) {
@@ -116,7 +116,7 @@ int main(int argc , char *argv[]) {
         exit(EXIT_FAILURE);
     }
 
-    printf("Listener on port %d \n", PORT);
+    printf(BLU "Listener on port %d\n" RESET, PORT);
 
     if (listen(master_socket, 3) < 0) {
         perror("listen");
@@ -125,7 +125,7 @@ int main(int argc , char *argv[]) {
 
     //accept the incoming connection
     addrlen = sizeof(address);
-    puts("Waiting for connections ...");
+    printf(BLU "Waiting for connections...\n" RESET);
 
     while(TRUE) {
         FD_ZERO(&readfds); // clear socket set
@@ -166,7 +166,7 @@ int main(int argc , char *argv[]) {
                 perror("send");
             }
 
-            puts("Welcome message sent successfully");
+            printf(BLU "Welcome message sent successfully\n" RESET);
 
             //add new socket to array of sockets
             for (i = 0; i < max_clients; i++)
@@ -175,7 +175,7 @@ int main(int argc , char *argv[]) {
                 if( client_socket[i] == 0 )
                 {
                     client_socket[i] = new_socket;
-                    printf("Adding to list of sockets as %d\n" , i);
+                    printf(BLU "Adding to list of sockets as %d\n" RESET, i);
 
                     break;
                 }
@@ -194,7 +194,7 @@ int main(int argc , char *argv[]) {
                     //Somebody disconnected , get his details and print
                     getpeername(sd , (struct sockaddr*)&address , \
                         (socklen_t*)&addrlen);
-                    printf("Host disconnected on socket %i, ip %s , port %d \n" , sd, inet_ntoa(address.sin_addr) , ntohs(address.sin_port));
+                    printf(RED "Host disconnected on socket %i, ip %s , port %d \n" RESET, sd, inet_ntoa(address.sin_addr) , ntohs(address.sin_port));
 
                     //Close the socket and mark as 0 in list for reuse
                     close( sd );
@@ -228,12 +228,12 @@ int main(int argc , char *argv[]) {
                           *tempName = '\0';
                         }
 
-                        printf("New name : %s end\n", tempName+1);
+                        // printf("New name : %s end\n", tempName+1);
                         char newName[100];
                         strcpy(newName, tempName+1);
 
                         change_name(hash, newName, inet_ntoa(address.sin_addr), messageToServer, messageToCaller, messageToOthers);
-                        printf("command detected: %s\n", buffer);
+                        printf(GRN "#### COMMAND DETECTED : %s\n", buffer);
                         int callers[2];
                         callers[0] = i;
                         callers[1] = i+1;
