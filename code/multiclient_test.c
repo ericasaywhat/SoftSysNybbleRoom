@@ -27,7 +27,7 @@
 
 typedef struct data_struct_s {
     char ip[KEY_MAX_LENGTH];
-    // char key_string[KEY_MAX_LENGTH];
+    char key_string[KEY_MAX_LENGTH];
     char *name;
     int socket_file_descriptor;
 } Value;
@@ -65,6 +65,8 @@ void setup_new_connection(GHashTable* hash, int new_socket, struct sockaddr_in a
     printf("#### IP : %s\n", value->ip);
     strcat(strcpy(key_string, KEY_PREFIX), value->ip);
     printf("#### KEY_STRING : %s\n", key_string);
+    snprintf(value->key_string, KEY_MAX_LENGTH, "%s", key_string);
+    printf("#### STORED KEY_STRING : %s\n", value->key_string);
 
     query_name = "Hi there! What do you want to be called? : ";
     send(new_socket, query_name , strlen(query_name) , 0 );
