@@ -37,18 +37,18 @@ int respond(int* client_socket, int caller, char* messageToServer, char * messag
     }
 }
 
-//Sends one message to each socket in callers and another socket to everyone else. Bad time complexity.
-int respondMultipleCallers (int* client_socket, int* callers, int numCallers, char* messageToServer, char * messageToCaller, char * messageToOthers) {
+//Sends one message to each socket in callerGroup and another socket to everyone else. Bad time complexity.
+int respondToGroup (int* client_socket, int* callerGroup, int groupSize, char* messageToServer, char * messageToCaller, char * messageToOthers) {
     printf("%s", messageToServer);
 
     int i;
-    for (i = 0; i<numCallers; i++){
-        send(client_socket[callers[i]], messageToCaller, strlen(messageToCaller), 0);
+    for (i = 0; i<groupSize; i++){
+        send(client_socket[callerGroup[i]], messageToCaller, strlen(messageToCaller), 0);
     }
 
     int j;
     for (j = 0; j < MAX_CLIENTS; j++) {
-        int isCaller =  valueInArray(callers, numCallers, j);
+        int isCaller =  valueInArray(callerGroup, groupSize, j);
         if (client_socket[j] != 0 && isCaller == 0) {
             send(client_socket[j] , messageToOthers , strlen(messageToOthers) , 0 );
         }

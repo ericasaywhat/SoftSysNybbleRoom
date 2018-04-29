@@ -244,7 +244,7 @@ int main(int argc , char *argv[]) {
                         int callers[2];
                         callers[0] = i;
                         callers[1] = i+1;
-                        respondMultipleCallers(client_socket, callers, 2, messageToServer, messageToCaller, messageToOthers);
+                        respondToGroup(client_socket, callers, 2, messageToServer, messageToCaller, messageToOthers);
 
                         continue;
                     }
