@@ -78,16 +78,13 @@ void printEntry(gpointer key, gpointer value, gpointer userdata) {
 }
 
 char* retrieveUsername(GHashTable* hash, char* ip) {
-    g_hash_table_foreach(hash, printEntry, NULL);
     char key_string[KEY_MAX_LENGTH];
     strcat(strcpy(key_string, KEY_PREFIX), ip);
     char* copy = g_strdup(key_string);
     gpointer ret = g_hash_table_lookup(hash, copy);
 
     if (ret != NULL) {
-        // puts("name found");
         Value *value = (Value *)ret;
-        // printf("%s\n", value->name);
         return value->name;
     } else {
         puts("name not found");
@@ -267,7 +264,7 @@ int main(int argc , char *argv[]) {
                         char* username_copy;
                         strcpy(username_copy, username);
                         char* new_message = strcat(strcat(username_copy, " says: "), buffer);
-                        printf("new_message is: %s\n", new_message);
+                        // printf("new_message is: %s\n", new_message);
                         respond(client_socket, i, new_message, "", new_message);
                         memset(new_message, 0 , 512);
                         memset(buffer, 0 , 1024);

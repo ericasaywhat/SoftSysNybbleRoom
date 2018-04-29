@@ -87,6 +87,7 @@ int change_name(GHashTable* hash, char* tempName, char* ip, char* messageToServe
     
     if (ret != NULL) {
         Value *value = (Value *)ret;
+        newName[strcspn(newName, "\n")-1] = 0;
         value->name = newName;
         g_hash_table_replace(hash, key_string, value);
 
