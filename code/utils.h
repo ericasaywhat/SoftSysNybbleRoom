@@ -12,7 +12,7 @@
 #include <assert.h>
 #include <glib.h>
 #include <glib/gstdio.h>
-#include "main.h"
+#include "wumpus.h"
 
 #define MAX_SERVER_MSG_LENGTH 512
 #define KEY_PREFIX ("nybbles_")

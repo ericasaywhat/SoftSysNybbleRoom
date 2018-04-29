@@ -1,489 +1,287 @@
-/*
- * HUNT THE WUMPUS!
- * A Software Systems Spring 2018 project by Erica Lee ('19) and Emily Yeh ('19)
- * with some help from James (Zhecan) Wang ('18).
- *
- * This game is meant to be as similar as possible to the official Hunt the Wumpus
- * game invented by Gregory Yob, although we did not implement the squashed
- * dodecahedron map and instead opted for a 5x5 square map.
- *
- * We hope this game is as fun for others as it was for us to create.
+//Example code: A simple server side code, which echos back the received message.
+//Handle multiple socket connections with select and fd_set on Linux
+
+#include "server_functions.c"
+
+/**
+ * Copies the user's IP address into a value.
  */
-
-#include "main.h"
-#define RESET "\x1B[0m"
-#define RED   "\x1B[31m"
-
-/*
- * Creates the game Map, including placing Objects on the Map.
- * Initializes locations of the player, the pit, the Wumpus, and the bats.
- *
- * return: pointer to newly created Map
- */
-Map* make_map(){
-    map = malloc(sizeof(Map));
-    map->width = 5;
-    map->height = 5;
-    map->numArrows = 5;
-    map->coords = coords();
-    Object* player = make_object();
-    Object* pit = make_object();
-    Object* wum = make_object();
-    Object* bat = make_object();
-
-    map->player = player;
-    map->pit = pit;
-    map->wum = wum;
-    map->bat = bat;
-
-    placeObject(map->pit, PIT);
-    placeObject(map->bat, BAT);
-    placeObject(map->wum, WUM);
-    placeObject(map->player, PLAYER);
-    checkConsequences();
-    whereisPlayer();
-
-    return map;
-}
-
-/*
- * Allocates space to an Object and returns a pointer to the Object.
- *
- * return: pointer to newly created Object
- */
-Object* make_object(){
-    Object* obj = malloc(sizeof(Object));
-    return obj;
-}
-
-/*
- * Places an object on the map.
- *
- * object: Object to be placed
- * identity: ID of the object to be placed
- */
-void placeObject(Object* object, int identity) {
-    time_t t;
-    srand((unsigned) time(&t));
-
-    int x = rand()%map->width;
-    int y = rand()%map->height;
-    while (map->coords[y][x] != 0) {
-        x = rand()%map->width;
-        y = rand()%map->height;
-    }
-
-    object->x = x;
-    object->y = y;
-
-    map->coords[y][x] = identity;
-}
-
-/*
- * Generates an empty 2D array for a Map to populate.
- *
- * return: pointer to pointer to 2D array
- */
-int** coords() {
-    int i, j;
-    int** coords = malloc(HEIGHT * WIDTH * sizeof(int*));
-
-    for(i=0; i<HEIGHT; i++) {
-        int* values = calloc(WIDTH*HEIGHT, sizeof(int));
-        coords[i] = values;
-    }
-    return coords;
-}
-
-/*
- * Allows the player to shoot or move in a given direction.
- *
- * direction: char direction to shoot or move in
- */
-void playerMovement(char direction){
-    switch(direction) {
-    //player shooting
-    case 'W':
-    case 'A':
-    case 'S':
-    case 'D':
-        shoot(direction);
-        break;
-    default:
-        if (playerCanMove(direction) && moveSuccessful(direction)) {
-            if (map->coords[map->player->y][map->player->x] == ARROW) {
-                map->numArrows++;
-                printf("You found an arrow! Arrows remaining: %i.\n", map->numArrows);
-            }
-            map->coords[map->player->y][map->player->x] = PLAYER;
-            checkConsequences();
-            if (!game_over) {
-                whereisPlayer();
-                printMaskedMap();
-            }
-        } else {
-            printf("You could not move in direction: %c. Please try again.\n", direction);
-            printMaskedMap();
-        }
+void copy_over_ip(Value *value, char* ip) {
+    for (int i = 0; i < strlen(ip); i++) {
+        value->ip[i] = ip[i];
     }
 }
 
-/*
- * Determines whether it's possible for the player to move in the given direction.
- *
- * direction: char direction the player wants to move in
+/**
+ * Frees the hashtable and all values inside of it.
  */
-bool playerCanMove(char direction) {
-    if ((direction == 'a' && map->player->x == 0) ||
-        (direction == 'd' && map->player->x == WIDTH-1) ||
-        (direction == 's' && map->player->y == HEIGHT-1) |
-        (direction == 'w' && map->player->y == 0) ||
-        (direction != 'a' && direction != 'w' &&
-            direction != 's' && direction != 'd')) {
-        return false;
+void free_everything(GHashTable* hash) {
+    g_hash_table_destroy(hash);
+    // TODO: Free any dynamically allocated values?
+    // TODO: Free everything else
+}
+
+/**
+ * Sets up a new connection and puts the resulting value into the hashtable.
+ */
+void setup_new_connection(GHashTable* hash, int new_socket, struct sockaddr_in address, Value *value) {
+    char* query_name;
+    char* new_name = malloc(sizeof(char) * MAX_USERNAME_SIZE); // TODO free this later
+    char key_string[KEY_MAX_LENGTH];
+    char* dump;
+
+    printf(GRN "ADDING NEW CONNECTION\n" RESET);
+    printf(GRN "SOCKET : %d, IP : %s, PORT : %d \n" RESET, new_socket, inet_ntoa(address.sin_addr), ntohs(address.sin_port));
+
+    copy_over_ip(value, inet_ntoa(address.sin_addr)); // store IP address
+    printf(GRN "IP : %s\n" RESET, value->ip);
+    strcat(strcpy(key_string, KEY_PREFIX), value->ip);
+    printf(GRN "KEY_STRING : %s\n" RESET, key_string);
+    snprintf(value->key_string, KEY_MAX_LENGTH, "%s", key_string);
+    printf(GRN "STORED KEY_STRING : %s\n" RESET, value->key_string);
+
+    query_name = "Hi there! Please choose your username (up to 10 characters): ";
+    send(new_socket, query_name , strlen(query_name) , 0 );
+    read(new_socket, new_name, MAX_USERNAME_SIZE); // get name value
+
+    new_name[strcspn(new_name, "\n")-1] = 0;
+
+    printf(GRN "NEW SOCKET'S NAME : %s \n" RESET, new_name);
+
+    value->name = new_name;
+    value->socket_file_descriptor = new_socket;
+    char* copy = g_strdup(key_string);
+    g_hash_table_insert(hash, copy, value);
+
+    printf(GRN "NEW CONNECTION ADDED SUCCESSFULLY!\n" RESET);
+}
+
+void remove_disconnected_user(GHashTable* hash, struct sockaddr_in address) {
+    char key_string[KEY_MAX_LENGTH];
+    strcat(strcpy(key_string, KEY_PREFIX), inet_ntoa(address.sin_addr));
+    char* copy = g_strdup(key_string);
+    gboolean ret = g_hash_table_remove(hash, copy);
+    if (ret) {
+        printf(RED "User successfully removed from hashtable.\n" RESET);
     } else {
-        return true;
+        printf(RED "Oops! User could not be found in hashtable.\n" RESET);
     }
 }
 
-/*
- * Moves the player.
- *
- * direction: char direction to move the player in
- */
-bool moveSuccessful(char direction) {
-    map->coords[map->player->y][map->player->x] = 0;
-    switch (direction) {
-        case 'w':
-            map->player->y--;
-            break;
-        case 'a':
-            map->player->x--;
-            break;
-        case 's':
-            map->player->y++;
-            break;
-        case 'd':
-            map->player->x++;
-            break;
-        default:
-            return false;
-    }
-    return true;
+void print_entry(gpointer key, gpointer value, gpointer userdata) {
+    Value* v = (Value *)value;
+    char* c = (char *)key;
+    printf("%s : %s\n", c, v->name);
 }
 
-/*
- * Shoots an arrow in the direction inputted by the user.
- *
- * direction: char direction to shoot in ('WASD')
- */
-void shoot(char direction){
-    if (map->numArrows == 0) {
-        puts("You are out of arrows! Try walking around to find more.");
+char* retrieve_username(GHashTable* hash, char* ip) {
+    char key_string[KEY_MAX_LENGTH];
+    strcat(strcpy(key_string, KEY_PREFIX), ip);
+    char* copy = g_strdup(key_string);
+    gpointer ret = g_hash_table_lookup(hash, copy);
+
+    if (ret != NULL) {
+        Value *value = (Value *)ret;
+        return value->name;
     } else {
-        map->numArrows--;
-
-        switch(direction) {
-            case 'W':
-            if (map->player->y < map->wum->y &&
-                map->player->x == map->wum->x) {
-                wumpusMovement();
-            } else if (map->player->y > map->wum->y &&
-                map->player->x == map->wum->x) {
-                endGame(PLAYERWIN);
-            }
-            break;
-            case 'S':
-            if(map->player->y > map->wum->y &&
-                map->player->x == map->wum->x){
-                wumpusMovement();
-            } else if(map->player->y < map->wum->y &&
-                map->player->x == map->wum->x){
-                endGame(PLAYERWIN);
-            }
-            break;
-            case 'A':
-            if(map->player->x < map->wum->x &&
-                map->player->y == map->wum->y){
-                wumpusMovement();
-            } else if (map->player->x > map->wum->x &&
-                map->player->y == map->wum->y) {
-                endGame(PLAYERWIN);
-            }
-            break;
-            case 'D':
-            if(map->player->x > map->wum->x &&
-                map->player->y == map->wum->y){
-                wumpusMovement();
-            } else if(map->player->x < map->wum->x &&
-                map->player->y == map->wum->y){
-                endGame(PLAYERWIN);
-            }
-            break;
-        }
-
-        if (!endGame) {
-            printf("You successfully shot an arrow in direction %c. Arrows remaining: %i.\n",
-            direction, map->numArrows);
-
-            if (map->numArrows == 0) {
-                placeArrow();
-            }
-        }
+        puts("name not found");
+        return NULL;
     }
 }
 
-
-/*
- * Checks consequences of the player's location.
- * If they are on the Wumpus or the pit, the game ends.
- * If they are near the Wumpus, a pit, or a bat, a text prompt is printed.
- */
-void checkConsequences(){
-    int playerx = map->player->x;
-    int playery = map->player->y;
-    int pitx = map->pit->x;
-    int pity = map->pit->y;
-    int wumx = map->wum->x;
-    int wumy = map->wum->y;
-    int batx = map->bat->x;
-    int baty = map->bat->y;
-
-    if ((playerx == pitx &&
-        playery == pity) ||
-        (playerx == pitx &&
-        playery == pity)) {
-        endGame(PITDEATH);
-    } else if (playerx == batx &&
-        playery == baty) {
-        batAbduction();
-    } else if (playerx == wumx &&
-        playery == wumy) {
-        endGame(WUMDEATH);
-    } else {
-        if ((playerx + 1 == wumx && playery == wumy) ||
-            (playerx - 1 == wumx && playery == wumy) ||
-            (playery + 1 == wumy && playerx == wumx) ||
-            (playery - 1 == wumy && playerx == wumx)) {
-            puts("You smell a wumpus! Proceed with caution...");
-        }
-        if ((playerx + 1 == pitx && playery == pity) ||
-            (playerx - 1 == pitx && playery == pity) ||
-            (playery + 1 == pity && playerx == pitx) ||
-            (playery - 1 == pity && playerx == pitx)) {
-            puts("You feel a breeze nearby. Watch your step...");
-        }
-        if ((playerx + 1 == batx && playery == baty) ||
-            (playerx - 1 == batx && playery == baty) ||
-            (playery + 1 == baty && playerx == batx) ||
-            (playery - 1 == baty && playerx == batx)) {
-            puts("You hear flapping nearby. Wonder what's making that sound?");
-        }
-    }
-}
-
-/*
- * Places an arrow at a random location in the map.
- */
-void placeArrow() {
-    time_t t;
-    srand((unsigned) time(&t));
-
-    int x = rand()%map->width;
-    int y = rand()%map->height;
-    while (map->coords[y][x] != 0) {
-        x = rand()%map->width;
-        y = rand()%map->height;
-    }
-
-    map->coords[y][x] = ARROW;
-}
-
-/*
- * Moves the Wumpus in a random direction.
- */
-void wumpusMovement() {
-    puts("You scared the Wumpus! You hear it running away to another part of the map...");
-    map->coords[map->wum->y][map->wum->x] = 0;
-    placeObject(map->wum, WUM);
-}
-
-/*
- * Abducts the player and moves them to a new part of the map.
- */
-void batAbduction() {
-    puts("Some giant friendly bats abduct you and carry you to another part of the map!");
-    map->coords[map->player->y][map->player->x] = 0;
-    placeObject(map->player, PLAYER);
-}
-
-/*
- * Ends the game and prints the appropriate statement.
- *
- * condition: 0 if player lost, 1 if player won
- */
-void endGame(int condition){
-    char c;
-
-    switch (condition){
-    case WUMDEATH:
-        puts("Game Over... The Wumpus got you.");
-        deaths++;
-        break;
-    case PITDEATH:
-        puts("Game Over... You fell down a pit!");
-        deaths++;
-        break;
-    case PLAYERWIN:
-        puts("You killed the Wumpus! Congratulations!");
-        kills++;
-        break;
-    }
-
-    game_over = true;
-}
-
-/*
- * Prints the location of the player.
- * Player location goes left to right and top to bottom.
- */
-void whereisPlayer() {
-    printf("You are at %i,%i.\n", map->player->x, map->player->y);
-}
-
-/*
- * Prints the map. (Just used for debugging.)
- */
-void printMap() {
-    int i, j;
-
-    for (i=0; i<5; i++){
-        for (j=0; j<5; j++) {
-            printf("%i ", map->coords[i][j]);
-        }
-        puts("\n");
-    }
-}
-
-/*
- * Prints a masked version of the map for visual aid.
- */
-void printMaskedMap() {
-    int i, j;
-
-    for (i = 0; i < WIDTH; i++) {
-        for (j = 0; j < HEIGHT; j++) {
-            if (map->coords[i][j] == PLAYER) {
-                printf("O ");
-            } else {
-                printf("- ");
-            }
-        }
-        puts("");
-    }
-}
-
-/*
- * Frees the objects (player, bat, pit, Wumpus).
- */
-void free_objects(){
-    free(map->player);
-    free(map->bat);
-    free(map->pit);
-    free(map->wum);
-}
-
-/*
- * Frees the map.
- */
-void free_map(){
-    int i;
-    for (i = 0; i < HEIGHT; i++) {
-        free(map->coords[i]);
-    }
-    free(map->coords);
-    free(map);
-}
-
-/*
- * Handles a signal (generally, CTRL+C for quitting).
- *
- * sig: integer signal to be handled
- */
-void INThandler(int sig) {
+void signal_handler(int sig) {
     char  c;
-
     signal(sig, SIG_IGN);
     printf(RED "\nAre you sure you want to quit? [y/n] " RESET);
     c = getchar();
     if (c == 'y' || c == 'Y'){
-        free_objects(); // free objects before map
-        free_map();
+        printf(RED "Okay! Closing server...\n" RESET);
+        printf(WHT " \n" RESET); // Resets color in terminal
+        // TODO free everything
         exit(0);
     }
     else{
-        signal(SIGINT, INThandler);
+        signal(SIGINT, signal_handler);
     }
     getchar(); // Get new line character
 }
 
-/*
- * Retrieves keys pressed by the user as commands for the game.
- */
-void getKeyPress() {
-    char s;
-    int i;
-    char valid_directions[] = "wasdWASD";
+int main(int argc , char *argv[]) {
+    // game_start();
+    int opt = TRUE;
+    int master_socket , addrlen , new_socket , client_socket[MAX_CLIENTS] ,
+          max_clients = MAX_CLIENTS , activity, i , valread , sd;
+    int max_sd;
+    struct sockaddr_in address;
+    Value *value;
+    char buffer[1025];  //data buffer of 1K
+    fd_set readfds; //set of socket descriptors
 
-    s = getchar();
+    GHashTable* hash = g_hash_table_new(g_str_hash, g_str_equal);
+    
+    char *message = "Welcome to the SoftSys NybbleRoom v1.0! \r\n";
 
-    for (i = 0; i < strlen(valid_directions); i++) {
-        if (s == valid_directions[i]) {
-            playerMovement(s);
+    //initialise all client_socket[] to 0 so not checked
+    for (i = 0; i < max_clients; i++) {
+        client_socket[i] = 0;
+    }
+
+    if( (master_socket = socket(AF_INET , SOCK_STREAM , 0)) == 0) {
+        perror("socket failed");
+        exit(EXIT_FAILURE);
+    }
+
+    if( setsockopt(master_socket, SOL_SOCKET, SO_REUSEADDR, (char *)&opt,
+          sizeof(opt)) < 0 ) {
+        perror("setsockopt");
+        exit(EXIT_FAILURE);
+    }
+
+    address.sin_family = AF_INET;
+    address.sin_addr.s_addr = INADDR_ANY;
+    address.sin_port = htons( PORT );
+
+    if (bind(master_socket, (struct sockaddr *)&address, sizeof(address))<0) {
+        perror("bind failed");
+        exit(EXIT_FAILURE);
+    }
+
+    printf(BLU "Listener on port %d\n" RESET, PORT);
+
+    if (listen(master_socket, 3) < 0) {
+        perror("listen");
+        exit(EXIT_FAILURE);
+    }
+
+    //accept the incoming connection
+    addrlen = sizeof(address);
+    printf(BLU "Waiting for connections...\n" RESET);
+    signal(SIGINT, signal_handler);
+    while(TRUE) {
+        FD_ZERO(&readfds); // clear socket set
+        FD_SET(master_socket, &readfds);
+        max_sd = master_socket;
+
+        for ( i = 0 ; i < max_clients ; i++) {
+            sd = client_socket[i];
+            if (sd > 0) {
+                FD_SET( sd , &readfds);
+            }
+            if (sd > max_sd) {
+                max_sd = sd;
+            }
+        }
+
+        activity = select( max_sd + 1 , &readfds , NULL , NULL , NULL);
+
+        if ((activity < 0) && (errno!=EINTR)) {
+            printf("select error");
+        }
+
+        //If something happened on the master socket then it's an incoming connection
+        if (FD_ISSET(master_socket, &readfds)) {
+            if ((new_socket = accept(master_socket,
+                    (struct sockaddr *)&address, (socklen_t*)&addrlen))<0)
+            {
+                perror("accept");
+                exit(EXIT_FAILURE);
+            }
+
+            value = malloc(sizeof(Value)); // allocate a new value
+            setup_new_connection(hash, new_socket, address, value);
+
+            //send new connection greeting message
+            if( send(new_socket, message, strlen(message), 0) != strlen(message) )
+            {
+                perror("send");
+            }
+
+            printf(BLU "Welcome message sent successfully!\n" RESET);
+
+            for (i = 0; i < max_clients; i++) {
+                if( client_socket[i] == 0 ) {
+                    client_socket[i] = new_socket;
+                    printf(BLU "Adding to list of sockets as %d...\n" RESET, i);
+                    break;
+                }
+            }
+        }
+        //else its some IO operation on some other socket
+        for (i = 0; i < max_clients; i++)
+        {
+            sd = client_socket[i];
+            if (FD_ISSET( sd , &readfds))
+            {
+                //Check if it was for closing , and also read the
+                //incoming message
+                if ((valread = read( sd , buffer, MAX_BUFFER_SIZE)) == 0)
+                {
+                    //Somebody disconnected , get his details and print
+                    getpeername(sd , (struct sockaddr*)&address , \
+                        (socklen_t*)&addrlen);
+                    printf(RED "Host disconnected on socket %i, ip %s , port %d \n" RESET, sd, inet_ntoa(address.sin_addr) , ntohs(address.sin_port));
+                    remove_disconnected_user(hash, address);
+                    //Close the socket and mark as 0 in list for reuse
+                    close( sd );
+                    client_socket[i] = 0;
+                }
+
+                //Handle the message that came in
+                else
+                {
+                    char * messageToServer = malloc(sizeof(char)*MAX_SERVER_MSG_LENGTH);
+                    char * messageToCaller = malloc(sizeof(char)*MAX_SERVER_MSG_LENGTH);
+                    char * messageToOthers = malloc(sizeof(char)*MAX_SERVER_MSG_LENGTH);
+                    //set the string terminating NULL byte on the end
+                    //of the data read
+                    if (strncmp(buffer, "!wumpus", 7) == 0){
+                        printf("wumpus command recognized\n");
+                        game_start();
+                        continue;
+                    }
+
+                    if (strncmp(buffer, "!test", 5) == 0){
+                        run_test(messageToServer, messageToCaller, messageToOthers);
+                        respond(client_socket, i, messageToServer, messageToCaller, messageToOthers);
+                        continue;
+                    }
+
+                    if (strncmp(buffer, "!name", 5) == 0) {
+                        char separator = ' ';
+                        char * const tempName = strchr(buffer, separator);
+                        if(tempName != NULL) {
+                          *tempName = '\0';
+                        }
+
+                        // printf("New name : %s end\n", tempName+1);
+                        char newName[100];
+                        strcpy(newName, tempName+1);
+
+                        change_name(hash, newName, inet_ntoa(address.sin_addr), messageToServer, messageToCaller, messageToOthers);
+                        printf(GRN "COMMAND DETECTED : %s\n", buffer);
+                        int callers[2];
+                        callers[0] = i;
+                        callers[1] = i+1;
+                        respond_to_group(client_socket, callers, 2, messageToServer, messageToCaller, messageToOthers);
+
+                        continue;
+                    }
+                    
+                    else {
+                        buffer[valread] = '\0';
+                        char* username = retrieve_username(hash, inet_ntoa(address.sin_addr));
+                        char* username_copy;
+                        strcpy(username_copy, username);
+                        char* new_message = strcat(strcat(username_copy, " says: "), buffer);
+                        // printf("new_message is: %s\n", new_message);
+                        respond(client_socket, i, new_message, "", new_message);
+                        memset(new_message, 0 , 512);
+                        memset(buffer, 0 , MAX_BUFFER_SIZE);
+                    }
+                }
+            }
         }
     }
+    return 0;
 }
 
-/*
- * Creates a new map and runs the game.
- */
-void playGame(){
-    make_map();
-    game_over = false;
-    printMaskedMap();
-
-    while (!game_over) {
-        signal(SIGINT, INThandler);
-        getKeyPress();
-    }
-}
-
-void game_start() {
-    char response[2];
-    want_to_play = true;
-    kills = 0;
-    deaths = 0;
-    while (want_to_play) {
-        puts("***************************");
-        puts("WELCOME TO HUNT THE WUMPUS!");
-        puts("Use lowercase wasd keys to move around the map.");
-        puts("Use uppercase WASD keys to shoot arrows. (You start out with 5.)");
-        printf("You have killed the Wumpus %i times.\n",
-            kills);
-        printf("You have died %i times.\n",
-            deaths);
-        puts("Good luck!");
-        puts("***************************\n");
-        playGame();
-        printf("Would you like to play again? [y/n] ");
-        scanf("%s", response);
-        if (response[0] == 'n') {
-            puts("Exiting...");
-            want_to_play = false;
-        } else {
-            puts("Great, let's play another round!\n");
-        }
-        free_objects(); // free objects before map
-        free_map();
-    }
-}
