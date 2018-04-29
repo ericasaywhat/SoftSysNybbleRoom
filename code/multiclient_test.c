@@ -13,13 +13,6 @@
 #include <assert.h>
 #include "server_functions.c"
 
-#define MAX_CLIENTS 30
-#define MAX_SERVER_MSG_LENGTH 512
-#define TRUE   1
-#define FALSE  0
-#define PORT   3000
-#define KEY_COUNT (1024*1024)
-
 /**
  * Copies the user's IP address into a value.
  */
@@ -43,7 +36,7 @@ void free_everything(GHashTable* hash) {
  */
 void setup_new_connection(GHashTable* hash, int new_socket, struct sockaddr_in address, Value *value) {
     char* query_name;
-    char* new_name = malloc(sizeof(char) * 1024);
+    char* new_name = malloc(sizeof(char) * MAX_USERNAME_SIZE);
     char key_string[KEY_MAX_LENGTH];
 
     puts("#### ADDING NEW CONNECTION");
@@ -56,9 +49,9 @@ void setup_new_connection(GHashTable* hash, int new_socket, struct sockaddr_in a
     snprintf(value->key_string, KEY_MAX_LENGTH, "%s", key_string);
     printf("#### STORED KEY_STRING : %s\n", value->key_string);
 
-    query_name = "Hi there! What do you want to be called? : ";
+    query_name = "Hi there! What do you want to be called? ";
     send(new_socket, query_name , strlen(query_name) , 0 );
-    read(new_socket, new_name, 1024); // get name value
+    read(new_socket, new_name, MAX_USERNAME_SIZE); // get name value
 
     new_name[strcspn(new_name, "\n")-1] = 0;
 
@@ -205,7 +198,7 @@ int main(int argc , char *argv[]) {
             {
                 //Check if it was for closing , and also read the
                 //incoming message
-                if ((valread = read( sd , buffer, 1024)) == 0)
+                if ((valread = read( sd , buffer, MAX_BUFFER_SIZE)) == 0)
                 {
                     //Somebody disconnected , get his details and print
                     getpeername(sd , (struct sockaddr*)&address , \
@@ -267,7 +260,7 @@ int main(int argc , char *argv[]) {
                         // printf("new_message is: %s\n", new_message);
                         respond(client_socket, i, new_message, "", new_message);
                         memset(new_message, 0 , 512);
-                        memset(buffer, 0 , 1024);
+                        memset(buffer, 0 , MAX_BUFFER_SIZE);
                     }
                 }
             }

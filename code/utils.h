@@ -1,0 +1,11 @@
+#define MAX_SERVER_MSG_LENGTH 512
+#define KEY_PREFIX ("nybbles_")
+#define KEY_MAX_LENGTH (256)
+#define MAX_CLIENTS 30
+#define MAX_SERVER_MSG_LENGTH 512
+#define MAX_USERNAME_SIZE 10
+#define MAX_BUFFER_SIZE 1024
+#define TRUE   1
+#define FALSE  0
+#define PORT   3000
+#define KEY_COUNT (1024*1024)

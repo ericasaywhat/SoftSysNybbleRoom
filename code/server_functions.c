@@ -4,13 +4,8 @@
 
 #include <glib.h>
 #include <glib/gstdio.h>
-
-// #define MAX_CLIENTS 30 //currently defined in main.h - we should pull this stuff out into another .h file.
 #include "main.h"
-#define MAX_SERVER_MSG_LENGTH 512
-
-#define KEY_PREFIX ("nybbles_")
-#define KEY_MAX_LENGTH (256)
+#include "utils.h"
 
 typedef struct data_struct_s {
     char *name;
