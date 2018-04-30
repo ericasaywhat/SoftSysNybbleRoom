@@ -55,7 +55,6 @@ int respond_to_group (int* client_socket, int* callerGroup, int groupSize, char*
         }
 
     }
-
 }
 
 int change_name(GHashTable* hash, char* tempName, char* ip, char* messageToServer, char* messageToCaller, char *messageToOthers) {

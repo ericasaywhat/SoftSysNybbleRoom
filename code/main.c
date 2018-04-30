@@ -89,6 +89,28 @@ char* retrieve_username(GHashTable* hash, char* ip) {
     }
 }
 
+void handle_name_change(GHashTable* hash, char* buffer, struct sockaddr_in address, int* client_socket, int i) {
+    char * messageToServer = malloc(sizeof(char)*MAX_SERVER_MSG_LENGTH);
+    char * messageToCaller = malloc(sizeof(char)*MAX_SERVER_MSG_LENGTH);
+    char * messageToOthers = malloc(sizeof(char)*MAX_SERVER_MSG_LENGTH);
+    char newName[100];
+    int callers[2];
+    char separator = ' ';
+    char * const tempName = strchr(buffer, separator);
+    if(tempName != NULL) {
+      *tempName = '\0';
+    }
+    strcpy(newName, tempName+1);
+    change_name(hash, newName, inet_ntoa(address.sin_addr), messageToServer, messageToCaller, messageToOthers);
+
+    callers[0] = i;
+    callers[1] = i+1;
+    respond_to_group(client_socket, callers, 2, messageToServer, messageToCaller, messageToOthers);
+    free(messageToServer);
+    free(messageToCaller);
+    free(messageToOthers);
+}
+
 void signal_handler(int sig) {
     char  c;
     signal(sig, SIG_IGN);
@@ -190,92 +212,59 @@ int main(int argc , char *argv[]) {
             value = malloc(sizeof(Value)); // allocate a new value
             setup_new_connection(hash, new_socket, address, value);
 
-            //send new connection greeting message
-            if( send(new_socket, message, strlen(message), 0) != strlen(message) )
-            {
+            if(send(new_socket, message, strlen(message), 0) != strlen(message)) {
                 perror("send");
+            } else {
+                printf(BLU "Welcome message sent successfully!\n" RESET);
             }
 
-            printf(BLU "Welcome message sent successfully!\n" RESET);
-
             for (i = 0; i < max_clients; i++) {
-                if( client_socket[i] == 0 ) {
+                if (client_socket[i] == 0) {
                     client_socket[i] = new_socket;
                     printf(BLU "Adding to list of sockets as %d...\n" RESET, i);
                     break;
                 }
             }
         }
-        //else its some IO operation on some other socket
-        for (i = 0; i < max_clients; i++)
-        {
+
+        for (i = 0; i < max_clients; i++) {
             sd = client_socket[i];
-            if (FD_ISSET( sd , &readfds))
-            {
-                //Check if it was for closing , and also read the
-                //incoming message
-                if ((valread = read( sd , buffer, MAX_BUFFER_SIZE)) == 0)
-                {
-                    //Somebody disconnected , get his details and print
-                    getpeername(sd , (struct sockaddr*)&address , \
-                        (socklen_t*)&addrlen);
-                    printf(RED "Host disconnected on socket %i, ip %s , port %d \n" RESET, sd, inet_ntoa(address.sin_addr) , ntohs(address.sin_port));
+            if (FD_ISSET(sd, &readfds)) {
+                // User disconnected
+                if ((valread = read( sd, buffer, MAX_BUFFER_SIZE)) == 0) {
+                    getpeername(sd, (struct sockaddr*)&address, (socklen_t*)&addrlen);
+                    printf(RED "Host disconnected on socket %i, ip %s, port %d...\n" RESET, sd, inet_ntoa(address.sin_addr), ntohs(address.sin_port));
                     remove_disconnected_user(hash, address);
-                    //Close the socket and mark as 0 in list for reuse
-                    close( sd );
+                    close(sd);
                     client_socket[i] = 0;
-                }
-
-                //Handle the message that came in
-                else
-                {
-                    char * messageToServer = malloc(sizeof(char)*MAX_SERVER_MSG_LENGTH);
-                    char * messageToCaller = malloc(sizeof(char)*MAX_SERVER_MSG_LENGTH);
-                    char * messageToOthers = malloc(sizeof(char)*MAX_SERVER_MSG_LENGTH);
-                    //set the string terminating NULL byte on the end
-                    //of the data read
-                    if (strncmp(buffer, "!wumpus", 7) == 0){
-                        printf("wumpus command recognized\n");
-                        game_start();
-                        continue;
-                    }
-
-                    if (strncmp(buffer, "!test", 5) == 0){
-                        run_test(messageToServer, messageToCaller, messageToOthers);
-                        respond(client_socket, i, messageToServer, messageToCaller, messageToOthers);
-                        continue;
-                    }
+                } else {
+                    
+                    // if (strncmp(buffer, "!wumpus", 7) == 0){
+                    //     printf("wumpus command recognized\n");
+                    //     game_start();
+                    //     continue;
+                    // }
+                    // if (strncmp(buffer, "!test", 5) == 0){
+                    //     run_test(messageToServer, messageToCaller, messageToOthers);
+                    //     respond(client_socket, i, messageToServer, messageToCaller, messageToOthers);
+                    //     continue;
+                    // }
 
                     if (strncmp(buffer, "!name", 5) == 0) {
-                        char separator = ' ';
-                        char * const tempName = strchr(buffer, separator);
-                        if(tempName != NULL) {
-                          *tempName = '\0';
-                        }
-
-                        // printf("New name : %s end\n", tempName+1);
-                        char newName[100];
-                        strcpy(newName, tempName+1);
-
-                        change_name(hash, newName, inet_ntoa(address.sin_addr), messageToServer, messageToCaller, messageToOthers);
-                        printf(GRN "COMMAND DETECTED : %s\n", buffer);
-                        int callers[2];
-                        callers[0] = i;
-                        callers[1] = i+1;
-                        respond_to_group(client_socket, callers, 2, messageToServer, messageToCaller, messageToOthers);
-
+                        handle_name_change(hash, buffer, address, client_socket, i);
+                        puts("help");
                         continue;
-                    }
-                    
-                    else {
+                    } else {
                         buffer[valread] = '\0';
-                        char* username = retrieve_username(hash, inet_ntoa(address.sin_addr));
-                        char* username_copy;
-                        strcpy(username_copy, username);
-                        char* new_message = strcat(strcat(username_copy, " says: "), buffer);
-                        // printf("new_message is: %s\n", new_message);
-                        respond(client_socket, i, new_message, "", new_message);
-                        memset(new_message, 0 , 512);
+                        const char* username = retrieve_username(hash, inet_ntoa(address.sin_addr));
+                        char message_to_send[MAX_SERVER_MSG_LENGTH];
+                        memset(message_to_send, '\0', sizeof(message_to_send));
+                        strcpy(message_to_send, username); // copy username in
+                        // printf("buffer: %s\n", buffer);
+                        strcat(strcat(message_to_send, " says: "), buffer);
+                        // printf("new_message is: %s\n", message_to_send);
+                        respond(client_socket, i, message_to_send, "", message_to_send);
+                        memset(message_to_send, 0 , MAX_SERVER_MSG_LENGTH);
                         memset(buffer, 0 , MAX_BUFFER_SIZE);
                     }
                 }
