@@ -1,24 +1,21 @@
 #include "server_functions.c"
 
 /**
+ * Copies the user's IP address into a value.
+ */
+void copy_over_ip(Value *value, char* ip) {
+    for (int i = 0; i < strlen(ip); i++) {
+        value->ip[i] = ip[i];
+    }
+}
+
+/**
  * Frees the hashtable and all values inside of it.
  */
 void free_everything(GHashTable* hash) {
     g_hash_table_destroy(hash);
     // TODO: Free any dynamically allocated values?
     // TODO: Free everything else
-}
-
-void remove_disconnected_user(GHashTable* hash, struct sockaddr_in address) {
-    char key_string[KEY_MAX_LENGTH];
-    strcat(strcpy(key_string, KEY_PREFIX), inet_ntoa(address.sin_addr));
-    char* copy = g_strdup(key_string);
-    gboolean ret = g_hash_table_remove(hash, copy);
-    if (ret) {
-        printf(RED "User successfully removed from hashtable.\n" RESET);
-    } else {
-        printf(RED "Oops! User could not be found in hashtable.\n" RESET);
-    }
 }
 
 void print_entry(gpointer key, gpointer value, gpointer userdata) {

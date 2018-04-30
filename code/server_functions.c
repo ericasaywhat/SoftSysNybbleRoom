@@ -1,14 +1,5 @@
 #include "utils.h"
 
-/**
- * Copies the user's IP address into a value.
- */
-void copy_over_ip(Value *value, char* ip) {
-    for (int i = 0; i < strlen(ip); i++) {
-        value->ip[i] = ip[i];
-    }
-}
-
 int val_in_array(int* array, int array_size, int value) {
     int i;
     for (i = 0; i < array_size; ++i) {
@@ -19,16 +10,16 @@ int val_in_array(int* array, int array_size, int value) {
     return 0;
 }
 
-//messageToServer, messageToCaller and messageToOther need to be malloc-ed with a maximum size. They'll be freed when the server shuts down?
-
-//Sends one message to caller and one message to others.
+/*
+ * Sends one message to caller and one message to others.
+ */
 int respond(int* client_socket, int caller, char* messageToServer, char * messageToCaller, char * messageToOthers) {
     
     printf("%s", messageToServer);
 
     int ret = 0;
 
-    if(caller>-1){
+    if (caller >= 0) {
         ret = send(client_socket[caller], messageToCaller, strlen(messageToCaller), 0);
         if (ret == -1) {
             return -1;
@@ -147,6 +138,19 @@ void setup_new_connection(GHashTable* hash, int new_socket, struct sockaddr_in a
     printf(GRN "NEW CONNECTION ADDED SUCCESSFULLY!\n" RESET);
 }
 
+void remove_disconnected_user(GHashTable* hash, struct sockaddr_in address) {
+    char key_string[KEY_MAX_LENGTH];
+    strcat(strcpy(key_string, KEY_PREFIX), inet_ntoa(address.sin_addr));
+    char* copy = g_strdup(key_string);
+    gboolean ret = g_hash_table_remove(hash, copy);
+    if (ret) {
+        printf(RED "User successfully removed from hashtable.\n" RESET);
+    } else {
+        printf(RED "Oops! User could not be found in hashtable.\n" RESET);
+    }
+}
+
+// TODO this should really be in a test file instead
 int run_test(char* messageToServer, char* messageToCaller, char* messageToOthers) {
     strcpy(messageToServer, ""); //empty message means nothing comes out.
     // strcpy(messageToServer, "someone typed a test function!\n");

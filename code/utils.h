@@ -39,3 +39,5 @@ typedef struct data_struct_s {
     char key_string[KEY_MAX_LENGTH];
     int socket_file_descriptor;
 } Value;
+
+void copy_over_ip(Value *value, char* ip);
