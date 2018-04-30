@@ -1,16 +1,4 @@
-//Example code: A simple server side code, which echos back the received message.
-//Handle multiple socket connections with select and fd_set on Linux
-
 #include "server_functions.c"
-
-/**
- * Copies the user's IP address into a value.
- */
-void copy_over_ip(Value *value, char* ip) {
-    for (int i = 0; i < strlen(ip); i++) {
-        value->ip[i] = ip[i];
-    }
-}
 
 /**
  * Frees the hashtable and all values inside of it.
@@ -19,41 +7,6 @@ void free_everything(GHashTable* hash) {
     g_hash_table_destroy(hash);
     // TODO: Free any dynamically allocated values?
     // TODO: Free everything else
-}
-
-/**
- * Sets up a new connection and puts the resulting value into the hashtable.
- */
-void setup_new_connection(GHashTable* hash, int new_socket, struct sockaddr_in address, Value *value) {
-    char* query_name;
-    char* new_name = malloc(sizeof(char) * MAX_USERNAME_SIZE); // TODO free this later
-    char key_string[KEY_MAX_LENGTH];
-    char* dump;
-
-    printf(GRN "ADDING NEW CONNECTION\n" RESET);
-    printf(GRN "SOCKET : %d, IP : %s, PORT : %d \n" RESET, new_socket, inet_ntoa(address.sin_addr), ntohs(address.sin_port));
-
-    copy_over_ip(value, inet_ntoa(address.sin_addr)); // store IP address
-    printf(GRN "IP : %s\n" RESET, value->ip);
-    strcat(strcpy(key_string, KEY_PREFIX), value->ip);
-    printf(GRN "KEY_STRING : %s\n" RESET, key_string);
-    snprintf(value->key_string, KEY_MAX_LENGTH, "%s", key_string);
-    printf(GRN "STORED KEY_STRING : %s\n" RESET, value->key_string);
-
-    query_name = "Hi there! Please choose your username (up to 10 characters): ";
-    send(new_socket, query_name , strlen(query_name) , 0 );
-    read(new_socket, new_name, MAX_USERNAME_SIZE); // get name value
-
-    new_name[strcspn(new_name, "\n")-1] = 0;
-
-    printf(GRN "NEW SOCKET'S NAME : %s \n" RESET, new_name);
-
-    value->name = new_name;
-    value->socket_file_descriptor = new_socket;
-    char* copy = g_strdup(key_string);
-    g_hash_table_insert(hash, copy, value);
-
-    printf(GRN "NEW CONNECTION ADDED SUCCESSFULLY!\n" RESET);
 }
 
 void remove_disconnected_user(GHashTable* hash, struct sockaddr_in address) {
@@ -87,28 +40,6 @@ char* retrieve_username(GHashTable* hash, char* ip) {
         puts("name not found");
         return NULL;
     }
-}
-
-void handle_name_change(GHashTable* hash, char* buffer, struct sockaddr_in address, int* client_socket, int i) {
-    char * messageToServer = malloc(sizeof(char)*MAX_SERVER_MSG_LENGTH);
-    char * messageToCaller = malloc(sizeof(char)*MAX_SERVER_MSG_LENGTH);
-    char * messageToOthers = malloc(sizeof(char)*MAX_SERVER_MSG_LENGTH);
-    char newName[100];
-    int callers[2];
-    char separator = ' ';
-    char * const tempName = strchr(buffer, separator);
-    if(tempName != NULL) {
-      *tempName = '\0';
-    }
-    strcpy(newName, tempName+1);
-    change_name(hash, newName, inet_ntoa(address.sin_addr), messageToServer, messageToCaller, messageToOthers);
-
-    callers[0] = i;
-    callers[1] = i+1;
-    respond_to_group(client_socket, callers, 2, messageToServer, messageToCaller, messageToOthers);
-    free(messageToServer);
-    free(messageToCaller);
-    free(messageToOthers);
 }
 
 void signal_handler(int sig) {
@@ -252,7 +183,6 @@ int main(int argc , char *argv[]) {
 
                     if (strncmp(buffer, "!name", 5) == 0) {
                         handle_name_change(hash, buffer, address, client_socket, i);
-                        puts("help");
                         continue;
                     } else {
                         buffer[valread] = '\0';
@@ -260,7 +190,6 @@ int main(int argc , char *argv[]) {
                         char message_to_send[MAX_SERVER_MSG_LENGTH];
                         memset(message_to_send, '\0', sizeof(message_to_send));
                         strcpy(message_to_send, username); // copy username in
-                        // printf("buffer: %s\n", buffer);
                         strcat(strcat(message_to_send, " says: "), buffer);
                         // printf("new_message is: %s\n", message_to_send);
                         respond(client_socket, i, message_to_send, "", message_to_send);
