@@ -13,7 +13,6 @@
 #include <assert.h>
 #include "server_functions.c"
 #include "rock_paper_scissors.c"
-#include "hashmap.h"
 
 #define MAX_CLIENTS 30
 #define MAX_SERVER_MSG_LENGTH 512
@@ -85,12 +84,8 @@ int main(int argc , char *argv[]) {
     char buffer[1025];  //data buffer of 1K
     fd_set readfds; //set of socket descriptors
 
-<<<<<<< HEAD
-    map = hashmap_new();
-=======
     GHashTable* hash = g_hash_table_new(g_str_hash, g_str_equal);
 
->>>>>>> origin/master
     char *message = "#### SoftSys NybbleRoom v1.0 \r\n";
 
     //initialise all client_socket[] to 0 so not checked

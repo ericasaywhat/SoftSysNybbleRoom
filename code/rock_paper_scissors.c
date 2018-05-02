@@ -36,14 +36,24 @@ char getP2Move(int p2socket){
 }
 
 char* playrps(int p1socket, int p2socket){
-	char* query_name = "PLAYING ROCK PAPER SCISSORSSSSSS!";
 	char* wait4p1 = "Waiting for Player 1";
 	char* wait4p2 = "Waiting for Player 2";
+
+	char* readerr = "Can't read your move. Please try again!";
 	//check for errors
 	send(p1socket, wait4p2, strlen(wait4p2), 0);
 	send(p2socket, wait4p1, strlen(wait4p1), 0);
-	char p1move = getP1Move(p1socket);
 	char p2move = getP2Move(p2socket);
+
+	while(p1move != 'r' || 'p' || 's') {
+		send(p1socket, readerr, strlen(readerr), 0);
+		char p1move = getP1Move(p1socket);
+	}
+
+	while(p2move != 'r' || 'p' || 's') {
+		send(p2socket, readerr, strlen(readerr), 0);
+		char p2move = getP2Move(p1socket);
+	}
 
 	if(p1move == 'r'){
 		if(p2move == 'r') tie(p1socket, p2socket);
@@ -58,7 +68,6 @@ char* playrps(int p1socket, int p2socket){
 		if(p2move == 'r') p2wins(p1socket, p2socket);
 		if(p2move == 'p') p1wins(p1socket, p2socket);
 	}
-	// send(p1socket, query_name , strlen(query_name) , 0 );
 }
 
 
