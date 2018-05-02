@@ -68,7 +68,7 @@ int main(int argc , char *argv[]) {
     fd_set readfds; //set of socket descriptors
 
     GHashTable* hash = g_hash_table_new(g_str_hash, g_str_equal);
-    
+
     char *message = "Welcome to the SoftSys NybbleRoom v1.0! \r\n";
 
     //initialise all client_socket[] to 0 so not checked
@@ -166,7 +166,7 @@ int main(int argc , char *argv[]) {
                     close(sd);
                     client_socket[i] = 0;
                 } else {
-                    
+
                     // if (strncmp(buffer, "!wumpus", 7) == 0){
                     //     printf("wumpus command recognized\n");
                     //     game_start();
@@ -181,7 +181,10 @@ int main(int argc , char *argv[]) {
                     if (strncmp(buffer, "!name", 5) == 0) {
                         handle_name_change(hash, buffer, address, client_socket, i);
                         continue;
-                    } else {
+                    } if (strncmp(buffer, "!rps", 4) == 0){
+                        play_rps_request(hash, buffer, value->name, sd);
+                        // continue;
+                   } else {
                         buffer[valread] = '\0';
                         const char* username = retrieve_username(hash, inet_ntoa(address.sin_addr));
                         char message_to_send[MAX_SERVER_MSG_LENGTH];

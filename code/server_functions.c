@@ -1,4 +1,5 @@
 #include "utils.h"
+#include "rock_paper_scissors.c"
 
 int val_in_array(int* array, int array_size, int value) {
     int i;
@@ -64,7 +65,7 @@ int change_name(GHashTable* hash, char* tempName, char* ip, char* messageToServe
     printf(GRN "REPLACING KEY_STRING VALUE AT : %s\n" RESET, key_string);
     // char* copy = g_strdup(key_string);
     gpointer ret = g_hash_table_lookup(hash, key_string);
-    
+
     if (ret != NULL) {
         Value *value = (Value *)ret;
         newName[strcspn(newName, "\n")-1] = 0;
@@ -78,7 +79,7 @@ int change_name(GHashTable* hash, char* tempName, char* ip, char* messageToServe
         printf(GRN "LOOKUP %s : %s\n" RESET, value->name, ((Value *)g_hash_table_lookup(hash, key_string))->name);
     } else {
         printf(RED "Oops! The user was not in the map yet.\n" RESET);
-    }    
+    }
 }
 
 void handle_name_change(GHashTable* hash, char* buffer, struct sockaddr_in address, int* client_socket, int i) {
@@ -135,6 +136,11 @@ void setup_new_connection(GHashTable* hash, int new_socket, struct sockaddr_in a
     char* copy = g_strdup(key_string);
     g_hash_table_insert(hash, copy, value);
 
+
+    int size=g_hash_table_size(hash);
+    printf("SIZE OF TABLE: %d\n", size);
+
+
     printf(GRN "NEW CONNECTION ADDED SUCCESSFULLY!\n" RESET);
 }
 
@@ -157,3 +163,47 @@ int run_test(char* messageToServer, char* messageToCaller, char* messageToOthers
     strcpy(messageToCaller, "you typed a test function!\n\0");
     strcpy(messageToOthers, "someone else typed a test function!\n\0");
 }
+
+
+void play_rps_request(GHashTable* hash, char* buffer, char* p1Name, int p1socket){
+    puts("rps command recognized\n");
+
+    GHashTableIter iter;
+    gpointer key;
+    Value *value;
+
+    char * messageToServer = malloc(sizeof(char)*MAX_SERVER_MSG_LENGTH);
+    char * messageToCaller = malloc(sizeof(char)*MAX_SERVER_MSG_LENGTH);
+    char * messageToOthers = malloc(sizeof(char)*MAX_SERVER_MSG_LENGTH);
+
+
+    //TODO: messages; remember to telnet in with different IP
+
+    // strcpy(messageToCaller, "Who do you want to play?\n\0");
+    // strcpy(messageToServer, "Name change detected.\n\0");
+    // strcpy(messageToOthers, "Someone else changed their name!\n\0");
+
+    char p2Name[100];
+    int callers[2];
+    char separator = ' ';
+    int p2Socket;
+    char * const tempName = strchr(buffer, separator);
+    if(tempName != NULL) {
+      *tempName = '\0';
+    }
+
+    strcpy(p2Name, tempName+1);
+    p2Name[strcspn(p2Name, "\n")-1] = 0;
+
+    g_hash_table_iter_init (&iter, hash);
+    while (g_hash_table_iter_next (&iter, &key, &value)) {
+        if(strcmp(value->name, p2Name) == 0) {  break;  }
+    }
+
+    if(strcmp(value->name, p2Name) == 0){
+            p2Socket = value->socket_file_descriptor;
+    } else {  puts("Didn't find it\n");  }
+
+    play_rps(p1Name, p1socket, p2Name, p2Socket);
+}
+
