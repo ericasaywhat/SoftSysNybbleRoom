@@ -1,25 +1,6 @@
-#include <stdio.h>
-#include <string.h>   //strlen
-#include <sys/socket.h> //send
+#include "utils.h"
 
-#include <glib.h>
-#include <glib/gstdio.h>
-
-// #define MAX_CLIENTS 30 //currently defined in main.h - we should pull this stuff out into another .h file.
-#include "main.h"
-#define MAX_SERVER_MSG_LENGTH 512
-
-#define KEY_PREFIX ("nybbles_")
-#define KEY_MAX_LENGTH (256)
-
-typedef struct data_struct_s {
-    char ip[KEY_MAX_LENGTH];
-    char key_string[KEY_MAX_LENGTH];
-    char *name;
-    int socket_file_descriptor;
-} Value;
-
-int valueInArray(int* array, int array_size, int value) {
+int val_in_array(int* array, int array_size, int value) {
     int i;
     for (i = 0; i < array_size; ++i) {
         if (array[i] == value) {
@@ -29,16 +10,16 @@ int valueInArray(int* array, int array_size, int value) {
     return 0;
 }
 
-//messageToServer, messageToCaller and messageToOther need to be malloc-ed with a maximum size. They'll be freed when the server shuts down?
-
-//Sends one message to caller and one message to others.
+/*
+ * Sends one message to caller and one message to others.
+ */
 int respond(int* client_socket, int caller, char* messageToServer, char * messageToCaller, char * messageToOthers) {
 
     printf("%s", messageToServer);
 
     int ret = 0;
 
-    if(caller>-1){
+    if (caller >= 0) {
         ret = send(client_socket[caller], messageToCaller, strlen(messageToCaller), 0);
         if (ret == -1) {
             return -1;
@@ -58,7 +39,7 @@ int respond(int* client_socket, int caller, char* messageToServer, char * messag
 }
 
 //Sends one message to each socket in callerGroup and another socket to everyone else. Bad time complexity.
-int respondToGroup (int* client_socket, int* callerGroup, int groupSize, char* messageToServer, char * messageToCaller, char * messageToOthers) {
+int respond_to_group (int* client_socket, int* callerGroup, int groupSize, char* messageToServer, char * messageToCaller, char * messageToOthers) {
     printf("%s", messageToServer);
 
     int i;
@@ -68,39 +49,108 @@ int respondToGroup (int* client_socket, int* callerGroup, int groupSize, char* m
 
     int j;
     for (j = 0; j < MAX_CLIENTS; j++) {
-        int isCaller =  valueInArray(callerGroup, groupSize, j);
+        int isCaller =  val_in_array(callerGroup, groupSize, j);
         if (client_socket[j] != 0 && isCaller == 0) {
             send(client_socket[j] , messageToOthers , strlen(messageToOthers) , 0 );
         }
 
     }
-
 }
 
-int change_name(GHashTable* hash, char* newName, char* ip, char* messageToServer, char* messageToCaller, char *messageToOthers) {
-    char key_string[KEY_MAX_LENGTH]; // TODO move KEY_MAX_LENGTH to this file
+int change_name(GHashTable* hash, char* tempName, char* ip, char* messageToServer, char* messageToCaller, char *messageToOthers) {
+    char* newName = g_strdup(tempName);
+    char* key_string = malloc(sizeof(char) * KEY_MAX_LENGTH);
     strcat(strcpy(key_string, KEY_PREFIX), ip);
-    printf("#### REPLACING KEY_STRING VALUE AT : %s\n", key_string);
-    char* copy = g_strdup(key_string);
-    gpointer ret = g_hash_table_lookup(hash, copy);
+    printf(GRN "REPLACING KEY_STRING VALUE AT : %s\n" RESET, key_string);
+    // char* copy = g_strdup(key_string);
+    gpointer ret = g_hash_table_lookup(hash, key_string);
     
     if (ret != NULL) {
         Value *value = (Value *)ret;
+        newName[strcspn(newName, "\n")-1] = 0;
         value->name = newName;
-        g_hash_table_replace(hash, copy, value);
+        g_hash_table_replace(hash, key_string, value);
 
-        strcpy(messageToServer, "name change detected.\n");
-        strcpy(messageToCaller, "name changed successfully\n\0");
-        strcpy(messageToOthers, "someone else changed their name\n\0");
+        strcpy(messageToServer, "Name change detected.\n\0");
+        strcpy(messageToCaller, "Name changed successfully!\n\0");
+        strcpy(messageToOthers, "Someone else changed their name!\n\0");
 
-        printf("#### LOOKUP %s : %s\n", newName, ((Value *)g_hash_table_lookup(hash, copy))->name);
+        printf(GRN "LOOKUP %s : %s\n" RESET, value->name, ((Value *)g_hash_table_lookup(hash, key_string))->name);
     } else {
-        puts("User was not in the map yet");
-    }
-
-    
+        printf(RED "Oops! The user was not in the map yet.\n" RESET);
+    }    
 }
 
+void handle_name_change(GHashTable* hash, char* buffer, struct sockaddr_in address, int* client_socket, int i) {
+    char * messageToServer = malloc(sizeof(char)*MAX_SERVER_MSG_LENGTH);
+    char * messageToCaller = malloc(sizeof(char)*MAX_SERVER_MSG_LENGTH);
+    char * messageToOthers = malloc(sizeof(char)*MAX_SERVER_MSG_LENGTH);
+    char newName[100];
+    int callers[2];
+    char separator = ' ';
+    char * const tempName = strchr(buffer, separator);
+    if(tempName != NULL) {
+      *tempName = '\0';
+    }
+    strcpy(newName, tempName+1);
+    change_name(hash, newName, inet_ntoa(address.sin_addr), messageToServer, messageToCaller, messageToOthers);
+
+    callers[0] = i;
+    callers[1] = i+1;
+    respond_to_group(client_socket, callers, 2, messageToServer, messageToCaller, messageToOthers);
+    free(messageToServer);
+    free(messageToCaller);
+    free(messageToOthers);
+}
+
+/**
+ * Sets up a new connection and puts the resulting value into the hashtable.
+ */
+void setup_new_connection(GHashTable* hash, int new_socket, struct sockaddr_in address, Value *value) {
+    char* query_name;
+    char* new_name = malloc(sizeof(char) * MAX_USERNAME_SIZE); // TODO free this later
+    char key_string[KEY_MAX_LENGTH];
+    char* dump;
+
+    printf(GRN "ADDING NEW CONNECTION\n" RESET);
+    printf(GRN "SOCKET : %d, IP : %s, PORT : %d \n" RESET, new_socket, inet_ntoa(address.sin_addr), ntohs(address.sin_port));
+
+    copy_over_ip(value, inet_ntoa(address.sin_addr)); // store IP address
+    printf(GRN "IP : %s\n" RESET, value->ip);
+    strcat(strcpy(key_string, KEY_PREFIX), value->ip);
+    printf(GRN "KEY_STRING : %s\n" RESET, key_string);
+    snprintf(value->key_string, KEY_MAX_LENGTH, "%s", key_string);
+    printf(GRN "STORED KEY_STRING : %s\n" RESET, value->key_string);
+
+    query_name = "Hi there! Please choose your username (up to 10 characters): ";
+    send(new_socket, query_name , strlen(query_name) , 0 );
+    read(new_socket, new_name, MAX_USERNAME_SIZE); // get name value
+
+    new_name[strcspn(new_name, "\n")-1] = 0;
+
+    printf(GRN "NEW SOCKET'S NAME : %s \n" RESET, new_name);
+
+    value->name = new_name;
+    value->socket_file_descriptor = new_socket;
+    char* copy = g_strdup(key_string);
+    g_hash_table_insert(hash, copy, value);
+
+    printf(GRN "NEW CONNECTION ADDED SUCCESSFULLY!\n" RESET);
+}
+
+void remove_disconnected_user(GHashTable* hash, struct sockaddr_in address) {
+    char key_string[KEY_MAX_LENGTH];
+    strcat(strcpy(key_string, KEY_PREFIX), inet_ntoa(address.sin_addr));
+    char* copy = g_strdup(key_string);
+    gboolean ret = g_hash_table_remove(hash, copy);
+    if (ret) {
+        printf(RED "User successfully removed from hashtable.\n" RESET);
+    } else {
+        printf(RED "Oops! User could not be found in hashtable.\n" RESET);
+    }
+}
+
+// TODO this should really be in a test file instead
 int run_test(char* messageToServer, char* messageToCaller, char* messageToOthers) {
     strcpy(messageToServer, ""); //empty message means nothing comes out.
     // strcpy(messageToServer, "someone typed a test function!\n");
