@@ -179,14 +179,24 @@ int main(int argc , char *argv[]) {
                     // }
 
                     if (strncmp(buffer, "!name", 5) == 0) {
+                        getpeername(sd, (struct sockaddr*)&address, (socklen_t*)&addrlen);
                         handle_name_change(hash, buffer, address, client_socket, i);
                         continue;
                     } if (strncmp(buffer, "!rps", 4) == 0){
                         play_rps_request(hash, buffer, value->name, sd);
                         // continue;
-                   } else {
+                    } else {
+                        getpeername(sd, (struct sockaddr*)&address, (socklen_t*)&addrlen);
                         buffer[valread] = '\0';
-                        const char* username = retrieve_username(hash, inet_ntoa(address.sin_addr));
+                        char* username = retrieve_username(hash, inet_ntoa(address.sin_addr));
+
+
+                        printf("retrieve_username took IP %s and returned %s\n", inet_ntoa(address.sin_addr), username);
+                        int size=g_hash_table_size(hash);
+                        printf("SIZE OF TABLE: %d\n", size);
+
+
+
                         char message_to_send[MAX_SERVER_MSG_LENGTH];
                         memset(message_to_send, '\0', sizeof(message_to_send));
                         strcpy(message_to_send, username); // copy username in
