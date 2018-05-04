@@ -202,8 +202,8 @@ void play_rps_request(GHashTable* hash, char* buffer, char* p1Name, int p1socket
 
     if(strcmp(value->name, p2Name) == 0){
             p2Socket = value->socket_file_descriptor;
-    } else {  puts("Didn't find it\n");  }
+    } else {  puts("Didn't find it\n");  }      //TODO: send message to client
 
-    play_rps(p1Name, p1socket, p2Name, p2Socket);
+    rps_game_start(p1Name, p1socket, p2Name, p2Socket);
 }
 
