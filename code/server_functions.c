@@ -165,6 +165,23 @@ int run_test(char* messageToServer, char* messageToCaller, char* messageToOthers
 }
 
 
+
+int get_socket_from_name(GHashTable* hash, char* targetName) {
+    GHashTableIter iter;
+    gpointer key;
+    Value *value;
+    int socket = -1;
+
+    g_hash_table_iter_init (&iter, hash); //do we need to free this?
+    while (g_hash_table_iter_next (&iter, &key, &value)) {
+        if(strcmp(value->name, targetName) == 0) {  
+            socket = value->socket_file_descriptor;
+            break;  }
+    }
+    return socket;
+}
+
+
 void play_rps_request(GHashTable* hash, char* buffer, char* p1Name, int p1socket){
     puts("rps command recognized\n");
 
@@ -186,7 +203,7 @@ void play_rps_request(GHashTable* hash, char* buffer, char* p1Name, int p1socket
     char p2Name[100];
     int callers[2];
     char separator = ' ';
-    int p2Socket;
+    
     char * const tempName = strchr(buffer, separator);
     if(tempName != NULL) {
       *tempName = '\0';
@@ -195,15 +212,14 @@ void play_rps_request(GHashTable* hash, char* buffer, char* p1Name, int p1socket
     strcpy(p2Name, tempName+1);
     p2Name[strcspn(p2Name, "\n")-1] = 0;
 
-    g_hash_table_iter_init (&iter, hash);
-    while (g_hash_table_iter_next (&iter, &key, &value)) {
-        if(strcmp(value->name, p2Name) == 0) {  break;  }
-    }
 
-    if(strcmp(value->name, p2Name) == 0){
-            p2Socket = value->socket_file_descriptor;
-    } else {  puts("Didn't find it\n");  }      //TODO: send message to client
+    int p2Socket = get_socket_from_name(hash, p2Name);
 
-    rps_game_start(p1Name, p1socket, p2Name, p2Socket);
+    if (p2Socket != -1) {
+        rps_game_start(p1Name, p1socket, p2Name, p2Socket);
+    } else {
+
+    puts("Couldn't find it\n");
+}
 }
 
