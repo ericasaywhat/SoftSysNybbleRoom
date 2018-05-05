@@ -207,9 +207,9 @@ int main(int argc , char *argv[]) {
                         char* username = retrieve_username(hash, inet_ntoa(address.sin_addr));
 
 
-                        printf("retrieve_username took IP %s and returned %s\n", inet_ntoa(address.sin_addr), username);
+                        // printf("retrieve_username took IP %s and returned %s\n", inet_ntoa(address.sin_addr), username);
                         int size=g_hash_table_size(hash);
-                        printf("SIZE OF TABLE: %d\n", size);
+                        // printf("SIZE OF TABLE: %d\n", size);
 
 
 

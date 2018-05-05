@@ -12,6 +12,8 @@
 #include <assert.h>
 #include <glib.h>
 #include <glib/gstdio.h>
+#include <ctype.h>
+
 #include "wumpus.h"
 
 #define MAX_SERVER_MSG_LENGTH 512

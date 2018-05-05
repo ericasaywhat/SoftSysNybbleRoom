@@ -11,13 +11,39 @@ int val_in_array(int* array, int array_size, int value) {
     return 0;
 }
 
+char* strip_extra_spaces(char* str) {
+    int i, letter_count;
+    char* new_string = malloc(sizeof(char) * strlen(str));
+
+    for(i = letter_count = 0; i < strlen(str); i++) {
+        if (!isspace(str[i])) {
+            new_string[letter_count] = str[i];
+            letter_count++;
+        }
+    }
+    return new_string;
+}
+
+bool is_valid_name(char* name) {
+    if ((name == NULL) || (strlen(name) == 0) || (strlen(name) == 1) ||
+     (strlen(name) == 2) || (strlen(name) > MAX_USERNAME_SIZE)) {
+        return false;
+    }
+
+    // make sure it's not a blank name
+    char* tempname = strip_extra_spaces(name);
+    if (strlen(tempname) == 0) {
+        puts("it's blank");
+        return false;
+    }
+    return true;
+}
+
 /*
  * Sends one message to caller and one message to others.
  */
 int respond(int* client_socket, int caller, char* messageToServer, char * messageToCaller, char * messageToOthers) {
-
     printf("%s", messageToServer);
-
     int ret = 0;
 
     if (caller >= 0) {
@@ -68,7 +94,7 @@ int change_name(GHashTable* hash, char* tempName, char* ip, char* messageToServe
 
     if (ret != NULL) {
         Value *value = (Value *)ret;
-        newName[strcspn(newName, "\n")-1] = 0;
+        newName[strcspn(newName, "\n")] = 0;
         value->name = newName;
         g_hash_table_replace(hash, key_string, value);
 
@@ -89,16 +115,22 @@ void handle_name_change(GHashTable* hash, char* buffer, struct sockaddr_in addre
     char newName[100];
     int callers[2];
     char separator = ' ';
-    char * const tempName = strchr(buffer, separator);
-    if(tempName != NULL) {
-      *tempName = '\0';
-    }
-    strcpy(newName, tempName+1);
-    change_name(hash, newName, inet_ntoa(address.sin_addr), messageToServer, messageToCaller, messageToOthers);
+    char* tempName = strchr(buffer, separator);
 
-    callers[0] = i;
-    callers[1] = i+1;
-    respond_to_group(client_socket, callers, 2, messageToServer, messageToCaller, messageToOthers);
+    if (is_valid_name(tempName)) {
+        tempName[strcspn(tempName, "\n")-1] = 0;
+        *tempName = '\0';
+        memset(newName, '\0', sizeof(newName));
+        strcpy(newName, tempName+1);
+        change_name(hash, newName, inet_ntoa(address.sin_addr), messageToServer, messageToCaller, messageToOthers);
+        callers[0] = i;
+        callers[1] = i+1;
+        respond_to_group(client_socket, callers, 2, messageToServer, messageToCaller, messageToOthers);
+    } else {
+        char* prompt = "Attempt to change name failed. Try again?\nHint: The format for this command is !name [new name].\n";
+        send(client_socket[i], prompt, strlen(prompt), 0);
+    }
+
     free(messageToServer);
     free(messageToCaller);
     free(messageToOthers);
@@ -108,7 +140,7 @@ void handle_name_change(GHashTable* hash, char* buffer, struct sockaddr_in addre
  * Sets up a new connection and puts the resulting value into the hashtable.
  */
 void setup_new_connection(GHashTable* hash, int new_socket, struct sockaddr_in address, Value *value) {
-    char* query_name;
+    char* prompt;
     char* new_name = malloc(sizeof(char) * MAX_USERNAME_SIZE); // TODO free this later
     char key_string[KEY_MAX_LENGTH];
     char* dump;
@@ -123,9 +155,16 @@ void setup_new_connection(GHashTable* hash, int new_socket, struct sockaddr_in a
     snprintf(value->key_string, KEY_MAX_LENGTH, "%s", key_string);
     printf(GRN "STORED KEY_STRING : %s\n" RESET, value->key_string);
 
-    query_name = "Hi there! Please choose your username (up to 10 characters): ";
-    send(new_socket, query_name , strlen(query_name) , 0 );
-    read(new_socket, new_name, MAX_USERNAME_SIZE); // get name value
+    prompt = "Hi! Please choose your username (up to 10 characters): ";
+    send(new_socket, prompt, strlen(prompt), 0 );
+
+    while (!is_valid_name(new_name)) {
+        read(new_socket, new_name, MAX_USERNAME_SIZE); // get name value
+        if (!is_valid_name(new_name)) {
+            prompt = "Sorry, that wasn't a valid name. Try again? ";
+            send(new_socket, prompt , strlen(prompt) , 0 );
+        }
+    }
 
     new_name[strcspn(new_name, "\n")-1] = 0;
 
