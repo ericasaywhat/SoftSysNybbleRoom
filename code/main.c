@@ -39,6 +39,21 @@ char* retrieve_username(GHashTable* hash, char* ip) {
     }
 }
 
+int retrieve_socket_fd(GHashTable* hash, char* ip) {
+    char key_string[KEY_MAX_LENGTH];
+    strcat(strcpy(key_string, KEY_PREFIX), ip);
+    char* copy = g_strdup(key_string);
+    gpointer ret = g_hash_table_lookup(hash, copy);
+
+    if (ret != NULL) {
+        Value *value = (Value *)ret;
+        return value->socket_file_descriptor;
+    } else {
+        puts("socket_fd not found");
+        return NULL;
+    }
+}
+
 void signal_handler(int sig) {
     char  c;
     signal(sig, SIG_IGN);
@@ -66,9 +81,10 @@ int main(int argc , char *argv[]) {
     Value *value;
     char buffer[1025];  //data buffer of 1K
     fd_set readfds; //set of socket descriptors
+    int rps_players = 0;
 
     GHashTable* hash = g_hash_table_new(g_str_hash, g_str_equal);
-    
+
     char *message = "Welcome to the SoftSys NybbleRoom v1.0! \r\n";
 
     //initialise all client_socket[] to 0 so not checked
@@ -111,7 +127,6 @@ int main(int argc , char *argv[]) {
         FD_ZERO(&readfds); // clear socket set
         FD_SET(master_socket, &readfds);
         max_sd = master_socket;
-
         for ( i = 0 ; i < max_clients ; i++) {
             sd = client_socket[i];
             if (sd > 0) {
@@ -166,7 +181,7 @@ int main(int argc , char *argv[]) {
                     close(sd);
                     client_socket[i] = 0;
                 } else {
-                    
+
                     // if (strncmp(buffer, "!wumpus", 7) == 0){
                     //     printf("wumpus command recognized\n");
                     //     game_start();
@@ -177,11 +192,15 @@ int main(int argc , char *argv[]) {
                     //     respond(client_socket, i, messageToServer, messageToCaller, messageToOthers);
                     //     continue;
                     // }
-
                     if (strncmp(buffer, "!name", 5) == 0) {
                         getpeername(sd, (struct sockaddr*)&address, (socklen_t*)&addrlen);
                         handle_name_change(hash, buffer, address, client_socket, i);
                         continue;
+                    } else if (strncmp(buffer, "!rps", 4) == 0){
+                        getpeername(sd, (struct sockaddr*)&address, (socklen_t*)&addrlen);
+                        int p1Socket = retrieve_socket_fd(hash, inet_ntoa(address.sin_addr));
+                        play_rps_request(hash, buffer, value->name, p1Socket);
+                        // continue;
                     } else {
                         getpeername(sd, (struct sockaddr*)&address, (socklen_t*)&addrlen);
                         buffer[valread] = '\0';
