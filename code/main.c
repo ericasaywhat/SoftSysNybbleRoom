@@ -74,6 +74,7 @@ void signal_handler(int sig) {
 int main(int argc , char *argv[]) {
     // game_start();
     int opt = TRUE;
+    int chatting = 1;
     int master_socket , addrlen , new_socket , client_socket[MAX_CLIENTS] ,
           max_clients = MAX_CLIENTS , activity, i , valread , sd;
     int max_sd;

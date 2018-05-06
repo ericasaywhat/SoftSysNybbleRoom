@@ -176,13 +176,6 @@ void play_rps_request(GHashTable* hash, char* buffer, char* p1Name, int p1socket
     char * messageToCaller = malloc(sizeof(char)*MAX_SERVER_MSG_LENGTH);
     char * messageToOthers = malloc(sizeof(char)*MAX_SERVER_MSG_LENGTH);
 
-
-    //TODO: messages; remember to telnet in with different IP
-
-    // strcpy(messageToCaller, "Who do you want to play?\n\0");
-    // strcpy(messageToServer, "Name change detected.\n\0");
-    // strcpy(messageToOthers, "Someone else changed their name!\n\0");
-
     char p2Name[100];
     int callers[2];
     char separator = ' ';
@@ -205,5 +198,6 @@ void play_rps_request(GHashTable* hash, char* buffer, char* p1Name, int p1socket
     } else {  puts("Didn't find it\n");  }      //TODO: send message to client
 
     rps_game_start(p1Name, p1socket, p2Name, p2Socket);
+
 }
 
