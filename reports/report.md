@@ -76,7 +76,11 @@ The new clients will then be able to talk to each other via their terminals.
 
 ## Reflection
 
+We were able to achieve all of our original learning goals, in addition to learning some additional skills along the way, as we became more familiar with using GLib hashtables, string operations in C, and more advanced usages of pointers. One of the most valuable experiences during this project was debugging and understanding the errors that we found.
 
+We were not able to achieve all of our stretch goals for this project; we were unable to implement a way for players to play _Hunt the Wumpus_ and we were also unable to implement our program using threads and forks, even though this might have made the program less fallible. For example, when one user is specifying their username, any new users are unable to join the server because they are blocked while the main process waits for the first user to finish. In this way, our program is like a single threaded process, while it would have functioned much more smoothly as a multithreaded process.
+
+However, we did achieve several stretch goals, including allowing users to change their names in the chat room and allowing users to privately message each other. We are confident that we could have implemented more stretch goals, but in the end, we were unable to due to time constraints.
 
 ## Resources
 
