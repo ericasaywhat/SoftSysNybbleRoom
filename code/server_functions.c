@@ -148,6 +148,7 @@ void setup_new_connection(GHashTable* hash, int new_socket, struct sockaddr_in a
     char key_string[KEY_MAX_LENGTH];
     char* dump;
 
+
     printf(GRN "ADDING NEW CONNECTION\n" RESET);
     printf(GRN "SOCKET : %d, IP : %s, PORT : %d \n" RESET, new_socket, inet_ntoa(address.sin_addr), ntohs(address.sin_port));
 
@@ -238,7 +239,7 @@ int get_everything_after_first_space(char rest_of_string[100], char* buffer) {
     rest_of_string[strcspn(rest_of_string, "\n")] = 0;
 
     return tempName-buffer+1;
-} 
+}
 
 
 void whisper(GHashTable* hash, char* buffer, char* p1Name, int p1socket) {

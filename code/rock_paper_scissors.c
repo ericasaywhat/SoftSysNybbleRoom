@@ -29,10 +29,11 @@ char* gen_msg(char* p1Name, char* p2Name, char p1move, char p2move){
 void p1_wins(int p1Socket, int p2Socket, char* msg){
 	char* winmsg = malloc(sizeof(char)*MAX_BUFFER_SIZE);
 	char* losemsg = malloc(sizeof(char)*MAX_BUFFER_SIZE);
-	strcpy(winmsg, msg);
+
+	winmsg = strcpy(winmsg, msg);
 	strcat(strcat(winmsg, " "), WINMSG);
 
-	strcpy(losemsg, msg);
+	losemsg = strcpy(losemsg, msg);
 	strcat(strcat(losemsg, " "), LOSEMSG);
 
 	send(p1Socket, winmsg, strlen(winmsg), 0);
@@ -45,13 +46,13 @@ void p1_wins(int p1Socket, int p2Socket, char* msg){
 }
 
 void p2_wins(int p1Socket, int p2Socket, char* msg){
-	char* winmsg = strcat(strcat(msg, " "), WINMSG);
-	char* losemsg = strcat(strcat(msg, " "), LOSEMSG);
+	char* winmsg = malloc(sizeof(char)*MAX_BUFFER_SIZE);
+	char* losemsg = malloc(sizeof(char)*MAX_BUFFER_SIZE);
 
-	strcpy(winmsg, msg);
+	winmsg = strcpy(winmsg, msg);
 	strcat(strcat(winmsg, " "), WINMSG);
 
-	strcpy(losemsg, msg);
+	losemsg = strcpy(losemsg, msg);
 	strcat(strcat(losemsg, " "), LOSEMSG);
 
 	send(p1Socket, losemsg, strlen(losemsg), 0);

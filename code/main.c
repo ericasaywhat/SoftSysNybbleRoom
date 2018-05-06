@@ -14,6 +14,7 @@ void free_value(Value *value){
     free(value->ip);
     free(value->key_string);
     free(value->socket_file_descriptor);
+    free(value);
 }
 
 /**
@@ -166,7 +167,6 @@ int main(int argc , char *argv[]) {
 
             value = malloc(sizeof(Value)); // allocate a new value
             setup_new_connection(hash, new_socket, address, value);
-            // free_value(value);
 
             if(send(new_socket, message, strlen(message), 0) != strlen(message)) {
                 perror("send");
