@@ -179,8 +179,7 @@ void setup_new_connection(GHashTable* hash, int new_socket, struct sockaddr_in a
 
 
     int size=g_hash_table_size(hash);
-    printf("SIZE OF TABLE: %d\n", size);
-
+    // printf("SIZE OF TABLE: %d\n", size);
 
     printf(GRN "NEW CONNECTION ADDED SUCCESSFULLY!\n" RESET);
 }

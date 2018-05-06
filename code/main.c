@@ -50,7 +50,7 @@ int retrieve_socket_fd(GHashTable* hash, char* ip) {
         return value->socket_file_descriptor;
     } else {
         puts("socket_fd not found");
-        return NULL;
+        return -1;
     }
 }
 
@@ -218,19 +218,11 @@ int main(int argc , char *argv[]) {
                         getpeername(sd, (struct sockaddr*)&address, (socklen_t*)&addrlen);
                         buffer[valread] = '\0';
                         char* username = retrieve_username(hash, inet_ntoa(address.sin_addr));
-
-
-                        // printf("retrieve_username took IP %s and returned %s\n", inet_ntoa(address.sin_addr), username);
                         int size=g_hash_table_size(hash);
-                        // printf("SIZE OF TABLE: %d\n", size);
-
-
-
                         char message_to_send[MAX_SERVER_MSG_LENGTH];
                         memset(message_to_send, '\0', sizeof(message_to_send));
                         strcpy(message_to_send, username); // copy username in
                         strcat(strcat(message_to_send, " says: "), buffer);
-                        // printf("new_message is: %s\n", message_to_send);
                         respond(client_socket, i, message_to_send, "", message_to_send);
                         memset(message_to_send, 0 , MAX_SERVER_MSG_LENGTH);
                         memset(buffer, 0 , MAX_BUFFER_SIZE);
