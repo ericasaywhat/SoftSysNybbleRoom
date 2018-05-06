@@ -1,4 +1,4 @@
-FLAGS = -g -std=c99
+FLAGS = -g -w -std=c99
 GLIB_FLAGS = -I/usr/include/glib-2.0 -I/usr/lib/x86_64-linux-gnu/glib-2.0/include
 LIBS = -lglib-2.0
 

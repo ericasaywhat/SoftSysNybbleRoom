@@ -182,8 +182,7 @@ void setup_new_connection(GHashTable* hash, int new_socket, struct sockaddr_in a
 
 
     int size=g_hash_table_size(hash);
-    printf("SIZE OF TABLE: %d\n", size);
-
+    // printf("SIZE OF TABLE: %d\n", size);
 
 
     printf(GRN "NEW CONNECTION ADDED SUCCESSFULLY!\n" RESET);
@@ -224,6 +223,45 @@ int get_socket_from_name(GHashTable* hash, char* targetName) {
             break;  }
     }
     return socket;
+}
+
+//writes everything in buffer after first space into rest_of_string, returns position of first space
+int get_everything_after_first_space(char rest_of_string[100], char* buffer) {
+    char separator = ' ';
+
+    char * const tempName = strchr(buffer, separator);
+    if(tempName != NULL) {
+      *tempName = '\0';
+    }
+
+    strcpy(rest_of_string, tempName+1);
+    rest_of_string[strcspn(rest_of_string, "\n")] = 0;
+
+    return tempName-buffer+1;
+} 
+
+
+void whisper(GHashTable* hash, char* buffer, char* p1Name, int p1socket) {
+    GHashTableIter iter;
+    gpointer key;
+    Value *value;
+    char whisp_target[100];
+    char whisp_message[100];
+
+    int first_space = get_everything_after_first_space(whisp_target, buffer); // splits !w [whisper_target] [whisp_message] at first space
+
+    int second_space = get_everything_after_first_space(whisp_message, whisp_target); //splits [whisper_target] [whisp_message]
+
+    int p2Socket = get_socket_from_name(hash, whisp_target);
+
+
+    char message[100];
+    snprintf(message, 100, "%s: %s\n", p1Name, whisp_message);
+
+
+    if (p2Socket != -1){
+        send(p2Socket , message , strlen(message) , 0 );
+    }
 }
 
 
