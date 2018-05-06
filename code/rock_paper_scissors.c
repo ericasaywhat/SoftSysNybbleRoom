@@ -18,9 +18,13 @@ char* gen_msg(char* p1Name, char* p2Name, char p1move, char p2move){
 
 void p1_wins(int p1Socket, int p2Socket, char* msg){
 	puts("p1wins");
+	char* winmsg = malloc(sizeof(char)*MAX_BUFFER_SIZE);
+	char* losemsg = malloc(sizeof(char)*MAX_BUFFER_SIZE);
+	strcpy(winmsg, msg);
+	strcat(strcat(winmsg, " "), WINMSG);
 
-	char* winmsg = strcat(strcat(msg, " "), WINMSG);
-	char* losemsg = strcat(strcat(msg, " "), LOSEMSG);
+	strcpy(losemsg, msg);
+	strcat(strcat(losemsg, " "), LOSEMSG);
 
 	send(p1Socket, winmsg, strlen(winmsg), 0);
 	send(p2Socket, losemsg, strlen(losemsg), 0);
@@ -146,7 +150,6 @@ void rps_play_game(char* p1Name, char* p2Name, int p1Socket, int p2Socket, bool*
 	char* msg = gen_msg(p1Name, p2Name, p1move, p2move);
 
 	if(p1move == 'r'){
-		puts("here");
 		if(p2move == 'r') {
 			tie(p1Socket, p2Socket, msg);
 		} else if(p2move == 'p') {
@@ -160,7 +163,6 @@ void rps_play_game(char* p1Name, char* p2Name, int p1Socket, int p2Socket, bool*
 		} else if(p2move == 's') {
 			p2_wins(p1Socket, p2Socket, msg);
 		} else if(p2move == 'r') {
-			puts("there");
 			p1_wins(p1Socket, p2Socket, msg);
 		}
 	} else if (p1move == 's'){

@@ -225,14 +225,15 @@ int get_socket_from_name(GHashTable* hash, char* targetName) {
 
 void play_rps_request(GHashTable* hash, char* buffer, char* p1Name, int p1socket){
     puts("rps command recognized\n");
+    char *notice = malloc(sizeof(char)*MAX_BUFFER_SIZE);
+    strcpy(notice, "You are now playing rock rock paper scissors with ");
+    strcat(notice, p1Name);
+    strcat(notice, "\n");
 
+    // printf("%s\n", notice);
     GHashTableIter iter;
     gpointer key;
     Value *value;
-
-    char * messageToServer = malloc(sizeof(char)*MAX_SERVER_MSG_LENGTH);
-    char * messageToCaller = malloc(sizeof(char)*MAX_SERVER_MSG_LENGTH);
-    char * messageToOthers = malloc(sizeof(char)*MAX_SERVER_MSG_LENGTH);
 
     char p2Name[100];
     int callers[2];
@@ -248,6 +249,8 @@ void play_rps_request(GHashTable* hash, char* buffer, char* p1Name, int p1socket
 
 
     int p2Socket = get_socket_from_name(hash, p2Name);
+
+    send(p2Socket, notice, strlen(notice), 0);
 
     if (p2Socket != -1) {
         rps_game_start(p1Name, p1socket, p2Name, p2Socket);
