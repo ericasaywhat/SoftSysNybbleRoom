@@ -33,14 +33,8 @@ void p1_wins(int p1Socket, int p2Socket, char* msg){
 
 	send(p1Socket, winmsg, strlen(winmsg), 0);
 	send(p2Socket, losemsg, strlen(losemsg), 0);
-<<<<<<< HEAD
-	fin = true;
 
-	// free(winmsg);
-	// free(losemsg);
-=======
 	fin = 1;
->>>>>>> origin/master
 }
 
 void p2_wins(int p1Socket, int p2Socket, char* msg){
@@ -200,8 +194,8 @@ void rps_game_start(char* p1Name, int p1Socket, char* p2Name, int p2Socket){
 
  	while (want_to_play) {
         rps_play_game(p1Name, p2Name, p1Socket, p2Socket, &fin);
-        if (fin) {  
-            play_again(p1Socket, p2Socket, &want_to_play);  
+        if (fin) {
+            play_again(p1Socket, p2Socket, &want_to_play);
 
         }
 
