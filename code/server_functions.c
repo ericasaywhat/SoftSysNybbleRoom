@@ -34,8 +34,9 @@ bool is_valid_name(char* name) {
     char* tempname = strip_extra_spaces(name);
     if (strlen(tempname) == 0) {
         puts("it's blank");
+        free(tempname);
         return false;
-    }
+    } else { free(tempname); }
     return true;
 }
 
@@ -106,6 +107,8 @@ int change_name(GHashTable* hash, char* tempName, char* ip, char* messageToServe
     } else {
         printf(RED "Oops! The user was not in the map yet.\n" RESET);
     }
+
+    free(key_string);
 }
 
 void handle_name_change(GHashTable* hash, char* buffer, struct sockaddr_in address, int* client_socket, int i) {
@@ -145,6 +148,7 @@ void setup_new_connection(GHashTable* hash, int new_socket, struct sockaddr_in a
     char key_string[KEY_MAX_LENGTH];
     char* dump;
 
+
     printf(GRN "ADDING NEW CONNECTION\n" RESET);
     printf(GRN "SOCKET : %d, IP : %s, PORT : %d \n" RESET, new_socket, inet_ntoa(address.sin_addr), ntohs(address.sin_port));
 
@@ -180,6 +184,7 @@ void setup_new_connection(GHashTable* hash, int new_socket, struct sockaddr_in a
 
     int size=g_hash_table_size(hash);
     // printf("SIZE OF TABLE: %d\n", size);
+
 
     printf(GRN "NEW CONNECTION ADDED SUCCESSFULLY!\n" RESET);
 }
@@ -234,7 +239,7 @@ int get_everything_after_first_space(char rest_of_string[100], char* buffer) {
     rest_of_string[strcspn(rest_of_string, "\n")] = 0;
 
     return tempName-buffer+1;
-} 
+}
 
 
 void whisper(GHashTable* hash, char* buffer, char* p1Name, int p1socket) {
@@ -289,6 +294,7 @@ void play_rps_request(GHashTable* hash, char* buffer, char* p1Name, int p1socket
     int p2Socket = get_socket_from_name(hash, p2Name);
 
     send(p2Socket, notice, strlen(notice), 0);
+    free(notice);
 
     if (p2Socket != -1) {
         rps_game_start(p1Name, p1socket, p2Name, p2Socket);

@@ -9,6 +9,14 @@ void copy_over_ip(Value *value, char* ip) {
     }
 }
 
+void free_value(Value *value){
+    free(value->name);
+    free(value->ip);
+    free(value->key_string);
+    free(value->socket_file_descriptor);
+    free(value);
+}
+
 /**
  * Frees the hashtable and all values inside of it.
  */
@@ -30,6 +38,8 @@ char* retrieve_username(GHashTable* hash, char* ip) {
     char* copy = g_strdup(key_string);
     gpointer ret = g_hash_table_lookup(hash, copy);
 
+    free(copy);
+
     if (ret != NULL) {
         Value *value = (Value *)ret;
         return value->name;
@@ -44,6 +54,8 @@ int retrieve_socket_fd(GHashTable* hash, char* ip) {
     strcat(strcpy(key_string, KEY_PREFIX), ip);
     char* copy = g_strdup(key_string);
     gpointer ret = g_hash_table_lookup(hash, copy);
+
+    free(copy);
 
     if (ret != NULL) {
         Value *value = (Value *)ret;
@@ -202,7 +214,7 @@ int main(int argc , char *argv[]) {
                         getpeername(sd, (struct sockaddr*)&address, (socklen_t*)&addrlen);
                         int p1Socket = retrieve_socket_fd(hash, inet_ntoa(address.sin_addr));
                         char * username = retrieve_username(hash, inet_ntoa(address.sin_addr));
-                        
+
                         play_rps_request(hash, buffer, username, p1Socket);
                         // continue;
 

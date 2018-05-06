@@ -17,33 +17,50 @@ char* gen_msg(char* p1Name, char* p2Name, char p1move, char p2move){
 	char* append_p2 = strcat(strcat(temp2, " put "), &p2move);
 	char* moves = strcat(strcat(append_p1, " "), append_p2);
 
+	// free(temp1);
+	// free(temp2);
+	// free(append_p1);
+	// free(append_p2);
+
 	return moves;
 }
 
 
 void p1_wins(int p1Socket, int p2Socket, char* msg){
-	puts("p1wins");
 	char* winmsg = malloc(sizeof(char)*MAX_BUFFER_SIZE);
 	char* losemsg = malloc(sizeof(char)*MAX_BUFFER_SIZE);
-	strcpy(winmsg, msg);
+
+	winmsg = strcpy(winmsg, msg);
 	strcat(strcat(winmsg, " "), WINMSG);
 
-	strcpy(losemsg, msg);
+	losemsg = strcpy(losemsg, msg);
 	strcat(strcat(losemsg, " "), LOSEMSG);
 
 	send(p1Socket, winmsg, strlen(winmsg), 0);
 	send(p2Socket, losemsg, strlen(losemsg), 0);
+
+	// free(winmsg);
+	// free(losemsg);
+
 	fin = 1;
 }
 
 void p2_wins(int p1Socket, int p2Socket, char* msg){
-	puts("p2wins?");
+	char* winmsg = malloc(sizeof(char)*MAX_BUFFER_SIZE);
+	char* losemsg = malloc(sizeof(char)*MAX_BUFFER_SIZE);
 
-	char* winmsg = strcat(strcat(msg, " "), WINMSG);
-	char* losemsg = strcat(strcat(msg, " "), LOSEMSG);
+	winmsg = strcpy(winmsg, msg);
+	strcat(strcat(winmsg, " "), WINMSG);
+
+	losemsg = strcpy(losemsg, msg);
+	strcat(strcat(losemsg, " "), LOSEMSG);
 
 	send(p1Socket, losemsg, strlen(losemsg), 0);
 	send(p2Socket, winmsg, strlen(winmsg), 0);
+
+	// free(winmsg);
+	// free(losemsg);
+
 	fin = 1;
 }
 
@@ -75,6 +92,7 @@ void rps_get_move(int socket, char *move) {
             *move = s[0];
         }
     }
+    free(s);
 }
 
 void rps_get_response(int socket, char *resp, int* want_to_play) {
@@ -109,6 +127,7 @@ void rps_get_response(int socket, char *resp, int* want_to_play) {
             *resp = s[0];
         }
     }
+    free(s);
 }
 
 
@@ -156,6 +175,8 @@ void rps_play_game(char* p1Name, char* p2Name, int p1Socket, int p2Socket, int* 
 	rps_get_move(p2Socket, &p2move);
 
 	char* msg = gen_msg(p1Name, p2Name, p1move, p2move);
+	printf("%s\n",msg);
+
 
 	if(p1move == 'r'){
 		if(p2move == 'r') {
@@ -191,8 +212,8 @@ void rps_game_start(char* p1Name, int p1Socket, char* p2Name, int p2Socket){
 
  	while (want_to_play) {
         rps_play_game(p1Name, p2Name, p1Socket, p2Socket, &fin);
-        if (fin) {  
-            play_again(p1Socket, p2Socket, &want_to_play);  
+        if (fin) {
+            play_again(p1Socket, p2Socket, &want_to_play);
 
         }
 
