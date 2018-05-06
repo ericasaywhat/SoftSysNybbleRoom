@@ -195,13 +195,25 @@ int main(int argc , char *argv[]) {
                     // }
                     if (strncmp(buffer, "!name", 5) == 0) {
                         getpeername(sd, (struct sockaddr*)&address, (socklen_t*)&addrlen);
+
                         handle_name_change(hash, buffer, address, client_socket, i);
                         continue;
                     } else if (strncmp(buffer, "!rps", 4) == 0){
                         getpeername(sd, (struct sockaddr*)&address, (socklen_t*)&addrlen);
                         int p1Socket = retrieve_socket_fd(hash, inet_ntoa(address.sin_addr));
-                        play_rps_request(hash, buffer, value->name, p1Socket);
+                        char * username = retrieve_username(hash, inet_ntoa(address.sin_addr));
+                        
+                        play_rps_request(hash, buffer, username, p1Socket);
                         // continue;
+
+                    } else if (strncmp(buffer, "!w", 2) == 0) {
+                        getpeername(sd, (struct sockaddr*)&address, (socklen_t*)&addrlen);
+
+                        int p1Socket = retrieve_socket_fd(hash, inet_ntoa(address.sin_addr));
+                        char * username = retrieve_username(hash, inet_ntoa(address.sin_addr));
+
+                        whisper(hash, buffer, username, p1Socket);
+
                     } else {
                         getpeername(sd, (struct sockaddr*)&address, (socklen_t*)&addrlen);
                         buffer[valread] = '\0';
