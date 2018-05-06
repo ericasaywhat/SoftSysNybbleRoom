@@ -50,7 +50,7 @@ Name change detected.
 Example says: Hello! I changed my name!
 ```
 
-The client may also choose to play a game with another client using the `!rps [other client's name]` command. [INSERT RPS EXPLANATION HERE]
+The client, now referred to as Player 1, may also choose to play a game with another client, now referred to as Player 2. using the `!rps [other client's name]` command. The server sends a text prompt to Player 2 to let them know that they are now in a game of Rock-paper-scissors. Player 1 and Player 2 are prompted to input a move ('r' for rock, 'p' for paper, and 's' for scissors). After which, they both see the results of the game and are asked whether they want to play again. The program uses a `select()` system call to get the responses for whether or not they want to play again. If they do not respond within the time limit, the `select()` system call times out, the players are prompted to input a move again. If they do not want to play again, both clients quit the game and are back in the group chat where they are able to see what other clients have said in the group chat while they have been playing the game. 
 
 Finally, once a client disconnects, they are removed from the hashtable and the socket associated with them is freed. We choose to implement this behavior, as opposed to leaving the client in the hashtable in case they return to the chat room later, because it is more space efficient. Should a client return to the chat room, they must go through the same process that they did when they first joined, where their information is stored in the hashtable again.
 
