@@ -29,6 +29,9 @@ void p1_wins(int p1Socket, int p2Socket, char* msg){
 	send(p1Socket, winmsg, strlen(winmsg), 0);
 	send(p2Socket, losemsg, strlen(losemsg), 0);
 	fin = true;
+
+	// free(winmsg);
+	// free(losemsg);
 }
 
 void p2_wins(int p1Socket, int p2Socket, char* msg){
@@ -70,6 +73,7 @@ void rps_get_move(int socket, char *move) {
             *move = s[0];
         }
     }
+    // free(s);
 }
 
 void rps_get_response(int socket, char *resp) {
@@ -101,6 +105,7 @@ void rps_get_response(int socket, char *resp) {
             *resp = s[0];
         }
     }
+    // free(s);
 }
 
 
