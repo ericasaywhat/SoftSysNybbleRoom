@@ -55,8 +55,15 @@ The client, now referred to as Player 1, may also choose to play a game with ano
 Finally, once a client disconnects, they are removed from the hashtable and the socket associated with them is freed. We choose to implement this behavior, as opposed to leaving the client in the hashtable in case they return to the chat room later, because it is more space efficient. Should a client return to the chat room, they must go through the same process that they did when they first joined, where their information is stored in the hashtable again.
 
 ## Preventing Memory Leaks
-
-
+Our program frees all memory allocations so that the results of valgrind yield:
+```
+==26589== LEAK SUMMARY:
+==26589==    definitely lost: 0 bytes in 0 blocks
+==26589==    indirectly lost: 0 bytes in 0 blocks
+==26589==      possibly lost: 0 bytes in 0 blocks
+==26589==    still reachable: 3,437 bytes in 13 blocks
+```
+The GLib hashtable of clients is meant to persist until the end of the program. Given more time, we would improve memory management by implementing functions for a more organized and efficient way of freeing memory.
 
 ## How to Run the Chat Room
 
