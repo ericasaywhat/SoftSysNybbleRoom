@@ -157,6 +157,8 @@ void setup_new_connection(GHashTable* hash, int new_socket, struct sockaddr_in a
 
     prompt = "Hi! Please choose your username (up to 10 characters): ";
     send(new_socket, prompt, strlen(prompt), 0 );
+    read(new_socket, new_name, MAX_USERNAME_SIZE); // get name value
+
 
     while (!is_valid_name(new_name)) {
         read(new_socket, new_name, MAX_USERNAME_SIZE); // get name value
@@ -213,7 +215,7 @@ int get_socket_from_name(GHashTable* hash, char* targetName) {
 
     g_hash_table_iter_init (&iter, hash); //do we need to free this?
     while (g_hash_table_iter_next (&iter, &key, &value)) {
-        if(strcmp(value->name, targetName) == 0) {  
+        if(strcmp(value->name, targetName) == 0) {
             socket = value->socket_file_descriptor;
             break;  }
     }
@@ -223,26 +225,20 @@ int get_socket_from_name(GHashTable* hash, char* targetName) {
 
 void play_rps_request(GHashTable* hash, char* buffer, char* p1Name, int p1socket){
     puts("rps command recognized\n");
+    char *notice = malloc(sizeof(char)*MAX_BUFFER_SIZE);
+    strcpy(notice, "You are now playing rock rock paper scissors with ");
+    strcat(notice, p1Name);
+    strcat(notice, "\n");
 
+    // printf("%s\n", notice);
     GHashTableIter iter;
     gpointer key;
     Value *value;
 
-    char * messageToServer = malloc(sizeof(char)*MAX_SERVER_MSG_LENGTH);
-    char * messageToCaller = malloc(sizeof(char)*MAX_SERVER_MSG_LENGTH);
-    char * messageToOthers = malloc(sizeof(char)*MAX_SERVER_MSG_LENGTH);
-
-
-    //TODO: messages; remember to telnet in with different IP
-
-    // strcpy(messageToCaller, "Who do you want to play?\n\0");
-    // strcpy(messageToServer, "Name change detected.\n\0");
-    // strcpy(messageToOthers, "Someone else changed their name!\n\0");
-
     char p2Name[100];
     int callers[2];
     char separator = ' ';
-    
+
     char * const tempName = strchr(buffer, separator);
     if(tempName != NULL) {
       *tempName = '\0';
@@ -254,11 +250,13 @@ void play_rps_request(GHashTable* hash, char* buffer, char* p1Name, int p1socket
 
     int p2Socket = get_socket_from_name(hash, p2Name);
 
+    send(p2Socket, notice, strlen(notice), 0);
+
     if (p2Socket != -1) {
         rps_game_start(p1Name, p1socket, p2Name, p2Socket);
     } else {
+        puts("Couldn't find it\n");
+    }
+}
 
-    puts("Couldn't find it\n");
-}
-}
 
