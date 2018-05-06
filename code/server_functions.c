@@ -157,6 +157,8 @@ void setup_new_connection(GHashTable* hash, int new_socket, struct sockaddr_in a
 
     prompt = "Hi! Please choose your username (up to 10 characters): ";
     send(new_socket, prompt, strlen(prompt), 0 );
+    read(new_socket, new_name, MAX_USERNAME_SIZE); // get name value
+
 
     while (!is_valid_name(new_name)) {
         read(new_socket, new_name, MAX_USERNAME_SIZE); // get name value
