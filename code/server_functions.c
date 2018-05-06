@@ -220,6 +220,35 @@ int get_socket_from_name(GHashTable* hash, char* targetName) {
     return socket;
 }
 
+void get_everything_after_first_space(char rest_of_string[100], char* buffer) {
+    char separator = ' ';
+
+    char * const tempName = strchr(buffer, separator);
+    if(tempName != NULL) {
+      *tempName = '\0';
+    }
+
+    strcpy(rest_of_string, tempName+1);
+    rest_of_string[strcspn(rest_of_string, "\n")-1] = 0;
+} 
+
+
+void whisper(GHashTable* hash, char* buffer, char* p1Name, int p1socket) {
+    GHashTableIter iter;
+    gpointer key;
+    Value *value;
+
+    char p2Name[100];
+    get_everything_after_first_space(p2Name, buffer);
+
+    int p2Socket = get_socket_from_name(hash, p2Name);
+
+    // if (p2Socket != -1){
+
+    // }
+
+}
+
 
 void play_rps_request(GHashTable* hash, char* buffer, char* p1Name, int p1socket){
     puts("rps command recognized\n");
