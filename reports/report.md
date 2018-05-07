@@ -56,13 +56,13 @@ Example says: Hello! I changed my name!
 
 One client, Player 1, may also choose to play a game of rock-paper-scissors with another client, Player 2. using the `!rps [other client's name]` command. The server sends a text prompt to Player 2 to let them know that they are now in a game of rock-paper-scissors. Player 1 and Player 2 are then prompted to input a move (`r` for rock, `p` for paper, and `s` for scissors). After both players have entered their respective choices, they both see the results of the game and are asked whether they want to play again.
 
-Once a game of rock-paper-scissors has completed successfully, the program uses a `select` system call to get the responses for whether or not they want to play again. If they do not respond within the time limit of 3 seconds, the `select` system call times out and another round of rock-paper-scissors starts. The players are prompted to input a move again.
+Once a game of rock-paper-scissors has completed successfully, the program uses a `select` system call to get the responses for whether or not they want to play again. If they do not respond within the time limit of 3 seconds, the `select` system call times out and another round of rock-paper-scissors starts. The players are subsequently prompted to input a move again. We chose to implement this behavior because we observed that such auto-play behaviors can make it easier for people to play short games more efficiently. Instead of waiting for each other to respond, the clients in our chat room may just wait for the game to restart to play more rounds.
 
-If the players do not want to play again, both clients may quit the game and return to the group chat, where they are able to see what other clients have said in the group chat while they have been playing the game.
+Conversely, if the players do not want to play again, and both players exit the game, they return to the chat room, where they are able to see what other clients have said while they were playing the game.
 
 #### Private Messaging
 
-Clients can send private messages (or whispers) to another client using the `!rps [other client's name]` command. The server retrieves the recipient's socket descriptor from the hashtable and sends the appropriate message.
+Clients can send private messages (or whispers) to another client using the `!rps [other client's name]` command. The server retrieves the recipient's socket descriptor from the hashtable and sends the appropriate message. This prevents the server from seeing the message, as well as any other clients who are not meant to be the recipient of the message.
 
 #### Disconnecting
 
@@ -76,13 +76,15 @@ Click the gif below to view the entire demonstration on YouTube.
 
 ## Preventing Memory Leaks
 Our program frees all memory allocations so that the results of valgrind yield:
+
 ```
 ==26589== LEAK SUMMARY:
 ==26589==    definitely lost: 0 bytes in 0 blocks
 ==26589==    indirectly lost: 0 bytes in 0 blocks
-==26589==      possibly lost: 0 bytes in 0 blocks
+==26589==    possibly lost: 0 bytes in 0 blocks
 ==26589==    still reachable: 3,437 bytes in 13 blocks
 ```
+
 We currently have a `free_value` function that frees the `Value` data structure. This function takes in a `Value` and frees all the pointers within the `Value` before freeing the pointer to that `Value`. Currently, the GLib hashtable of clients is meant to persist until the end of the program. Given more time, we would improve memory management by implementing more functions for a more organized and efficient way of freeing memory.
 
 ## How to Run the Chat Room
