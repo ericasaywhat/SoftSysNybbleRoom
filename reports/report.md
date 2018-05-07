@@ -62,7 +62,7 @@ If the players do not want to play again, both clients may quit the game and ret
 
 #### Private Messaging
 
-[INSERT PRIVATE MESSAGING EXPLANATION HERE]
+Clients can send private messages (or whispers) to another client using the `!rps [other client's name]` command. The server retrieves the recipient's socket descriptor from the hashtable and sends the appropriate message.
 
 #### Disconnecting
 
