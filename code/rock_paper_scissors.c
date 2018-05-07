@@ -218,9 +218,6 @@ void rps_game_start(char* p1Name, int p1Socket, char* p2Name, int p2Socket){
         }
 
     }
-        //free stuff
-
-
 }
 
 

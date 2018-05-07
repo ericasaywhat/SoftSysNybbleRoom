@@ -22,8 +22,6 @@ void free_value(Value *value){
  */
 void free_everything(GHashTable* hash) {
     g_hash_table_destroy(hash);
-    // TODO: Free any dynamically allocated values?
-    // TODO: Free everything else
 }
 
 void print_entry(gpointer key, gpointer value, gpointer userdata) {
@@ -74,7 +72,6 @@ void signal_handler(int sig) {
     if (c == 'y' || c == 'Y'){
         printf(RED "Okay! Closing server...\n" RESET);
         printf(WHT " \n" RESET); // Resets color in terminal
-        // TODO free everything
         exit(0);
     }
     else{
@@ -194,17 +191,6 @@ int main(int argc , char *argv[]) {
                     close(sd);
                     client_socket[i] = 0;
                 } else {
-
-                    // if (strncmp(buffer, "!wumpus", 7) == 0){
-                    //     printf("wumpus command recognized\n");
-                    //     game_start();
-                    //     continue;
-                    // }
-                    // if (strncmp(buffer, "!test", 5) == 0){
-                    //     run_test(messageToServer, messageToCaller, messageToOthers);
-                    //     respond(client_socket, i, messageToServer, messageToCaller, messageToOthers);
-                    //     continue;
-                    // }
                     if (strncmp(buffer, "!name", 5) == 0) {
                         getpeername(sd, (struct sockaddr*)&address, (socklen_t*)&addrlen);
 
