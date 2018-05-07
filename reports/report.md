@@ -31,7 +31,9 @@ typedef struct data_struct_s {
 
 `Value` is the data structure we use to keep track of the client's name, IP address, the hashtable key associated with the client, and the client's socket file descriptor. In turn, each `Value` is stored as the value of a key-value pair in the GLib hashtable, where the key is a string of characters that is unique to each client. In this case, we define the key as a combination of the string `nybbles_` and the client's IP address, since each client's IP address should be unique.
 
-Second, once the client has been added to the hashtable, they are able to start sending messages to other clients. In addition to sending messages, the client may also choose to change their username by entering `!name [new name]`. When a name change request is found, our program looks up the client in the hashtable and changes the stored name. Here is an example of output from this process:
+#### Username Changes
+
+Once the client has been added to the hashtable, they are able to start sending messages to other clients. In addition to sending messages, the client may also choose to change their username by entering `!name [new name]`. When a name change request is found, our program looks up the client in the hashtable and changes the stored name. Here is an example of output from this process:
 
 ```
 Listener on port 3000
@@ -50,9 +52,21 @@ Name change detected.
 Example says: Hello! I changed my name!
 ```
 
-The client, now referred to as Player 1, may also choose to play a game with another client, now referred to as Player 2. using the `!rps [other client's name]` command. The server sends a text prompt to Player 2 to let them know that they are now in a game of Rock-paper-scissors. Player 1 and Player 2 are prompted to input a move ('r' for rock, 'p' for paper, and 's' for scissors). After which, they both see the results of the game and are asked whether they want to play again. The program uses a `select()` system call to get the responses for whether or not they want to play again. If they do not respond within the time limit, the `select()` system call times out, the players are prompted to input a move again. If they do not want to play again, both clients quit the game and are back in the group chat where they are able to see what other clients have said in the group chat while they have been playing the game. 
+#### Rock-Paper-Scissors
 
-Finally, once a client disconnects, they are removed from the hashtable and the socket associated with them is freed. We choose to implement this behavior, as opposed to leaving the client in the hashtable in case they return to the chat room later, because it is more space efficient. Should a client return to the chat room, they must go through the same process that they did when they first joined, where their information is stored in the hashtable again.
+One client, Player 1, may also choose to play a game of rock-paper-scissors with another client, Player 2. using the `!rps [other client's name]` command. The server sends a text prompt to Player 2 to let them know that they are now in a game of rock-paper-scissors. Player 1 and Player 2 are then prompted to input a move (`r` for rock, `p` for paper, and `s` for scissors). After both players have entered their respective choices, they both see the results of the game and are asked whether they want to play again.
+
+Once a game of rock-paper-scissors has completed successfully, the program uses a `select` system call to get the responses for whether or not they want to play again. If they do not respond within the time limit of 3 seconds, the `select` system call times out and another round of rock-paper-scissors starts. The players are prompted to input a move again.
+
+If the players do not want to play again, both clients may quit the game and return to the group chat, where they are able to see what other clients have said in the group chat while they have been playing the game.
+
+#### Private Messaging
+
+[INSERT PRIVATE MESSAGING EXPLANATION HERE]
+
+#### Disconnecting
+
+Once a client disconnects, they are removed from the hashtable and the socket associated with them is freed. We choose to implement this behavior, as opposed to leaving the client in the hashtable in case they return to the chat room later, because it is more space efficient. Should a client return to the chat room, they must go through the same process that they did when they first joined, where their information is stored in the hashtable again.
 
 ## Demonstration
 
